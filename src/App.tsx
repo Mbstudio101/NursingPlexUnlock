@@ -338,6 +338,51 @@ function App() {
         </div>
       </section>
 
+      {/* BIG QUIZ CTA SECTION - Can't miss this */}
+      <section className="py-12 md:py-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-pink-600/10 to-purple-600/20" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl" />
+        
+        <div className="max-w-4xl mx-auto px-4 relative">
+          <div className={`rounded-3xl border-2 p-8 md:p-12 text-center ${darkMode ? 'bg-gray-900/80 border-purple-500/30' : 'bg-white border-purple-300'}`}>
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 mb-6 shadow-xl shadow-purple-500/30">
+              <GraduationCap className="w-10 h-10 text-white" />
+            </div>
+            <h3 className="text-3xl md:text-4xl font-bold mb-4">
+              🎓 Practice with all <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">127 Questions</span>
+            </h3>
+            <p className={`text-lg mb-8 max-w-2xl mx-auto ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              We scraped all 127 questions from the NursingPlex exam. Now practice them in an interactive quiz format with timer, flagging, and navigation.
+            </p>
+            
+            <button
+              onClick={() => setView('quiz')}
+              className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white text-xl font-bold hover:scale-110 transition-transform shadow-2xl shadow-purple-500/40 animate-pulse"
+            >
+              <GraduationCap className="w-7 h-7" />
+              START QUIZ NOW
+              <span className="text-2xl">→</span>
+            </button>
+            
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm">
+              <span className={`flex items-center gap-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Check className="w-4 h-4 text-emerald-400" /> 127 Questions
+              </span>
+              <span className={`flex items-center gap-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Check className="w-4 h-4 text-emerald-400" /> Timer
+              </span>
+              <span className={`flex items-center gap-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Check className="w-4 h-4 text-emerald-400" /> Flag for Review
+              </span>
+              <span className={`flex items-center gap-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Check className="w-4 h-4 text-emerald-400" /> Question Navigator
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How it works - Visual */}
       <section className={`py-12 ${darkMode ? 'bg-gray-900/50' : 'bg-gray-50'}`}>
         <div className="max-w-6xl mx-auto px-4">
@@ -666,6 +711,15 @@ function App() {
           </div>
         </div>
       </section>
+
+      {/* Floating Quiz Button */}
+      <button
+        onClick={() => setView('quiz')}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-6 py-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold shadow-2xl shadow-purple-500/50 hover:scale-110 transition-transform"
+      >
+        <GraduationCap className="w-6 h-6" />
+        <span className="hidden sm:inline">Take Quiz</span>
+      </button>
 
       {/* Footer */}
       <footer className={`py-8 border-t ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
