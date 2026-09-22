@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Shield, BookOpen, ChevronDown, ChevronUp, Copy, Check, Zap, AlertTriangle, ExternalLink, Lock, Unlock, Eye } from 'lucide-react';
+import { Shield, BookOpen, ChevronDown, ChevronUp, Copy, Check, Zap, AlertTriangle, ExternalLink, Lock, Unlock, Eye, GraduationCap } from 'lucide-react';
 import ScrapedQuestions from './ScrapedQuestions';
+import QuizView from './QuizView';
 
 // The bookmarklet script - TARGETED at actual NursingPlex DOM structure
 const BOOKMARKLET_SCRIPT = `javascript:void(function(){
@@ -206,10 +207,14 @@ function App() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState<'console' | 'bookmarklet'>('console');
-  const [view, setView] = useState<'home' | 'scraped'>('home');
+  const [view, setView] = useState<'home' | 'scraped' | 'quiz'>('home');
 
   if (view === 'scraped') {
-    return <ScrapedQuestions />;
+    return <ScrapedQuestions onExit={() => setView('home')} onStartQuiz={() => setView('quiz')} />;
+  }
+
+  if (view === 'quiz') {
+    return <QuizView onExit={() => setView('home')} />;
   }
 
   useEffect(() => {
@@ -315,13 +320,19 @@ function App() {
             {/* Proof it works */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
+                onClick={() => setView('quiz')}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-purple-500/20"
+              >
+                <GraduationCap className="w-5 h-5" />
+                Start Quiz Mode →
+              </button>
+              <button
                 onClick={() => setView('scraped')}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-emerald-500/20"
               >
                 <Eye className="w-5 h-5" />
-                View All 127 Scraped Questions →
+                View All 127 Questions →
               </button>
-              <span className="text-xs text-gray-500">Proof the script works</span>
             </div>
           </div>
         </div>
@@ -622,6 +633,13 @@ function App() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
+              onClick={() => setView('quiz')}
+              className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-purple-500/25"
+            >
+              <GraduationCap className="w-5 h-5" />
+              Start Quiz Mode
+            </button>
+            <button
               onClick={handleCopyScript}
               className={`flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-white transition-all ${
                 copied 
@@ -631,17 +649,6 @@ function App() {
             >
               {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
               {copied ? 'Copied to Clipboard!' : 'Copy Unlock Script'}
-            </button>
-            <button
-              onClick={() => setView('scraped')}
-              className={`flex items-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all border ${
-                darkMode 
-                  ? 'border-gray-700 hover:bg-gray-800 text-gray-300' 
-                  : 'border-gray-300 hover:bg-gray-100 text-gray-700'
-              }`}
-            >
-              <Eye className="w-5 h-5" />
-              View 127 Scraped Questions
             </button>
             <a
               href="https://nursingplex.com/review/rn-hesi-exit-exam-mcphs-1775539819"

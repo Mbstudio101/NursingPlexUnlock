@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ArrowLeft, Search, Download, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Search, Download, FileText, CheckCircle2, AlertCircle, BookOpen } from 'lucide-react';
 import { questions, examTitle, totalQuestions, totalPages, freeQuestions } from './data/questions';
 
-export default function ScrapedQuestions() {
+export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () => void; onStartQuiz?: () => void } = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAll, setShowAll] = useState(false);
   const [filter, setFilter] = useState<'all' | 'free' | 'locked'>('all');
@@ -42,16 +42,25 @@ export default function ScrapedQuestions() {
       <header className="sticky top-0 z-50 backdrop-blur-md bg-gray-950/80 border-b border-gray-800">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <a href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+            <button onClick={() => onExit ? onExit() : window.history.back()} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
               <ArrowLeft className="w-5 h-5" />
               <span className="hidden sm:inline">Back</span>
-            </a>
+            </button>
             <div>
               <h1 className="text-lg font-bold">Scraped Questions</h1>
               <p className="text-xs text-gray-400">{examTitle}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {onStartQuiz && (
+              <button
+                onClick={onStartQuiz}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm hover:bg-purple-500/20 transition-colors"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span className="hidden sm:inline">Take Quiz</span>
+              </button>
+            )}
             <button
               onClick={handleExport}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm hover:bg-emerald-500/20 transition-colors"
