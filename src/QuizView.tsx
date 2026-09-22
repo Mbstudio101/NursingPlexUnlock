@@ -1,12 +1,23 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Flag, CheckCircle2, Clock, List, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { questions, examTitle } from './data/questions';
+import { interactiveQuestions } from './data/interactiveData';
+import { 
+  NumericInput, 
+  HighlightText, 
+  HighlightFindings, 
+  MatrixGrid, 
+  DropdownFill, 
+  DiagramClick, 
+  DragCategories 
+} from './InteractiveComponents';
 
 type AnswerMap = Record<number, number[]>; // question number -> selected choice indices
 
 export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
+  const [interactiveAnswers, setInteractiveAnswers] = useState<Record<number, any>>({});
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
   const [showPalette, setShowPalette] = useState(false);
   const [showReview, setShowReview] = useState(false);
@@ -23,8 +34,21 @@ export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
 
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
-  const answeredCount = Object.keys(answers).length;
   const flaggedCount = flagged.size;
+
+  const isAnswered = (qNum: number) => {
+    if (answers[qNum] && answers[qNum].length > 0) return true;
+    if (interactiveAnswers[qNum] !== undefined) {
+      const val = interactiveAnswers[qNum];
+      if (typeof val === 'string' && val.trim() !== '') return true;
+      if (Array.isArray(val) && val.length > 0) return true;
+      if (typeof val === 'object' && val !== null && Object.keys(val).length > 0) return true;
+      if (typeof val === 'number') return true;
+    }
+    return false;
+  };
+
+  const answeredCount = questions.filter(q => isAnswered(q.number)).length;
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -76,12 +100,12 @@ export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
 
   const resetQuiz = () => {
     setAnswers({});
+    setInteractiveAnswers({});
     setFlagged(new Set());
     setCurrentIndex(0);
     setShowReview(false);
   };
 
-  const isAnswered = (qNum: number) => answers[qNum] && answers[qNum].length > 0;
   const isFlagged = (qNum: number) => flagged.has(qNum);
   const isSATA = currentQuestion.text.toLowerCase().includes('select all that apply') || 
                  currentQuestion.text.toLowerCase().includes('(sata)');
@@ -301,8 +325,79 @@ export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
                 {currentQuestion.text}
               </p>
 
-              {/* Answer Choices */}
-              {currentQuestion.choices.length > 0 && currentQuestion.choices[0] !== '(Fill in the blank - numeric value)' && currentQuestion.choices[0] !== '(Fill in the blanks)' && currentQuestion.choices[0] !== '(Drag and drop diagram)' && currentQuestion.choices[0] !== '(Drag and drop - drug classification and treatment goals)' && currentQuestion.choices[0] !== '(Drag and drop - drug classification and medication action)' && currentQuestion.choices[0] !== '(Drag and drop to complete sentence about PCI)' && currentQuestion.choices[0] !== '(Click the chosen location on diagram)' && (
+              {/* Interactive question types */}
+              {interactiveQuestions[currentQuestion.number] ? (
+                <div className="space-y-4">
+                  <div className="px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs flex items-center gap-2">
+                    <span>🎯 Interactive Question — {
+                      interactiveQuestions[currentQuestion.number].type === 'numeric' ? 'Enter a numeric value' :
+                      interactiveQuestions[currentQuestion.number].type === 'highlight-text' ? 'Click text to highlight' :
+                      interactiveQuestions[currentQuestion.number].type === 'highlight-findings' ? 'Click findings to highlight' :
+                      interactiveQuestions[currentQuestion.number].type === 'matrix' ? 'Match items to categories' :
+                      interactiveQuestions[currentQuestion.number].type === 'dropdown' ? 'Select from dropdowns' :
+                      interactiveQuestions[currentQuestion.number].type === 'diagram-click' ? 'Click a location on the diagram' :
+                      'Drag items into categories'
+                    }</span>
+                  </div>
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'numeric' && (
+                    <NumericInput
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || ''}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'highlight-text' && (
+                    <HighlightText
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || []}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'highlight-findings' && (
+                    <HighlightFindings
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || []}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'matrix' && (
+                    <MatrixGrid
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || {}}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'dropdown' && (
+                    <DropdownFill
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || {}}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'diagram-click' && (
+                    <DiagramClick
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] ?? null}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'drag-categories' && (
+                    <DragCategories
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || {}}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                </div>
+              ) : currentQuestion.choices.length > 0 && !currentQuestion.choices[0].startsWith('(') ? (
+                /* Standard multiple choice */
                 <div className="space-y-3">
                   {currentQuestion.choices.map((choice, i) => {
                     const isSelected = (answers[currentQuestion.number] || []).includes(i);
@@ -331,13 +426,11 @@ export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
                     );
                   })}
                 </div>
-              )}
-              
-              {/* Interactive question types */}
-              {(currentQuestion.choices[0]?.includes('Fill in') || currentQuestion.choices[0]?.includes('Drag and drop') || currentQuestion.choices[0]?.includes('Click the')) && (
-                <div className="p-4 rounded-xl bg-gray-800/50 border border-gray-700 text-sm text-gray-400 italic">
-                  <p className="mb-2">⚠️ This is an interactive question type (fill-in-blank, drag-and-drop, or click-to-highlight) that cannot be replicated in this quiz format.</p>
-                  <p>On NursingPlex, you would interact with the diagram or enter a numeric value.</p>
+              ) : (
+                /* Placeholder for questions without interactive data yet */
+                <div className="p-4 rounded-xl bg-gray-800/50 border border-gray-700 text-sm text-gray-400">
+                  <p className="mb-1">⚠️ This interactive question type hasn't been fully built yet.</p>
+                  <p className="text-xs text-gray-500">On NursingPlex, you would interact with a diagram, enter a numeric value, or drag items into categories.</p>
                 </div>
               )}
             </div>
