@@ -209,6 +209,12 @@ function App() {
   const [activeTab, setActiveTab] = useState<'console' | 'bookmarklet'>('console');
   const [view, setView] = useState<'home' | 'scraped' | 'quiz'>('home');
 
+  // Hooks must be called unconditionally - BEFORE any early returns
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    document.documentElement.classList.toggle('light', !darkMode);
+  }, [darkMode]);
+
   if (view === 'scraped') {
     return <ScrapedQuestions onExit={() => setView('home')} onStartQuiz={() => setView('quiz')} />;
   }
@@ -216,11 +222,6 @@ function App() {
   if (view === 'quiz') {
     return <QuizView onExit={() => setView('home')} />;
   }
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    document.documentElement.classList.toggle('light', !darkMode);
-  }, [darkMode]);
 
   const handleCopyScript = () => {
     navigator.clipboard.writeText(BOOKMARKLET_SCRIPT);
