@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Shield, BookOpen, ChevronDown, ChevronUp, Copy, Check, Zap, AlertTriangle, ExternalLink, Lock, Unlock, Eye } from 'lucide-react';
+import ScrapedQuestions from './ScrapedQuestions';
 
 // The bookmarklet script - TARGETED at actual NursingPlex DOM structure
 const BOOKMARKLET_SCRIPT = `javascript:void(function(){
@@ -205,6 +206,11 @@ function App() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState<'console' | 'bookmarklet'>('console');
+  const [view, setView] = useState<'home' | 'scraped'>('home');
+
+  if (view === 'scraped') {
+    return <ScrapedQuestions />;
+  }
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -301,9 +307,21 @@ function App() {
             </p>
             
             {/* Target URL */}
-            <div className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm ${darkMode ? 'bg-gray-800/50 text-gray-300 border border-gray-700' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+            <div className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm mb-6 ${darkMode ? 'bg-gray-800/50 text-gray-300 border border-gray-700' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
               <BookOpen className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               <code className="text-xs md:text-sm truncate max-w-[300px] md:max-w-none">nursingplex.com/review/rn-hesi-exit-exam-mcphs-1775539819</code>
+            </div>
+            
+            {/* Proof it works */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => setView('scraped')}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-emerald-500/20"
+              >
+                <Eye className="w-5 h-5" />
+                View All 127 Scraped Questions →
+              </button>
+              <span className="text-xs text-gray-500">Proof the script works</span>
             </div>
           </div>
         </div>
@@ -613,6 +631,17 @@ function App() {
             >
               {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
               {copied ? 'Copied to Clipboard!' : 'Copy Unlock Script'}
+            </button>
+            <button
+              onClick={() => setView('scraped')}
+              className={`flex items-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all border ${
+                darkMode 
+                  ? 'border-gray-700 hover:bg-gray-800 text-gray-300' 
+                  : 'border-gray-300 hover:bg-gray-100 text-gray-700'
+              }`}
+            >
+              <Eye className="w-5 h-5" />
+              View 127 Scraped Questions
             </button>
             <a
               href="https://nursingplex.com/review/rn-hesi-exit-exam-mcphs-1775539819"
