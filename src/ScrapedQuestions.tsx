@@ -8,6 +8,7 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
   const [filter, setFilter] = useState<'all' | 'free' | 'locked'>('all');
   const [selectedExamId, setSelectedExamId] = useState('rn-hesi-exit-mcphs');
   const [dropdownAnswers, setDropdownAnswers] = useState<Record<string, Record<number, string[]>>>({});
+  const [matrixAnswers, setMatrixAnswers] = useState<Record<string, Record<number, Record<number, string>>>>({});
 
   const selectedExam = allScrapedExams.find(exam => exam.id === selectedExamId) || allScrapedExams[0];
   const questions = selectedExam.questions || [];
@@ -305,7 +306,17 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
                           </div>
                         </div>
                       )}
-                      {q.type && q.type !== 'dropdown' && q.type !== 'numeric' && q.type !== 'ordering' && (
+                      {q.type === 'matrix' && q.rows && q.columns && (
+                        <InteractiveMatrix
+                          questionNumber={q.number}
+                          examId={selectedExamId}
+                          rows={q.rows}
+                          columns={q.columns}
+                          matrixAnswers={matrixAnswers}
+                          setMatrixAnswers={setMatrixAnswers}
+                        />
+                      )}
+                      {q.type && q.type !== 'dropdown' && q.type !== 'numeric' && q.type !== 'ordering' && q.type !== 'matrix' && (
                         <div className="text-xs text-purple-400 italic">
                           Interactive question type: {q.type}
                         </div>
@@ -439,6 +450,103 @@ function InteractiveDropdown({
       {currentAnswers.some(a => a) && (
         <div className="mt-3 p-2 bg-gray-800/50 rounded text-xs text-gray-400">
           <strong>Your selections:</strong> {currentAnswers.filter(a => a).join(' → ')}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Interactive Matrix Component
+function InteractiveMatrix({ 
+  questionNumber, 
+  examId, 
+  rows, 
+  columns, 
+  matrixAnswers, 
+  setMatrixAnswers 
+}: {
+  questionNumber: number;
+  examId: string;
+  rows: string[];
+  columns: string[];
+  matrixAnswers: Record<string, Record<number, Record<number, string>>>;
+  setMatrixAnswers: (answers: Record<string, Record<number, Record<number, string>>>) => void;
+}) {
+  const currentAnswers = matrixAnswers[examId]?.[questionNumber] || {};
+
+  const handleCellClick = (rowIndex: number, colValue: string) => {
+    const newAnswers = { ...matrixAnswers };
+    if (!newAnswers[examId]) {
+      newAnswers[examId] = {};
+    }
+    if (!newAnswers[examId][questionNumber]) {
+      newAnswers[examId][questionNumber] = {};
+    }
+    
+    // Toggle selection - if already selected, remove it; otherwise set it
+    if (newAnswers[examId][questionNumber][rowIndex] === colValue) {
+      delete newAnswers[examId][questionNumber][rowIndex];
+    } else {
+      newAnswers[examId][questionNumber][rowIndex] = colValue;
+    }
+    
+    setMatrixAnswers(newAnswers);
+  };
+
+  return (
+    <div className="mt-3 p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+      <p className="text-sm text-purple-400 mb-3">Click to select the appropriate column for each row:</p>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="border border-gray-700 bg-gray-800 p-2 text-left text-sm text-gray-300 min-w-[200px]">
+                Row
+              </th>
+              {columns.map((col, colIdx) => (
+                <th key={colIdx} className="border border-gray-700 bg-gray-800 p-2 text-center text-sm text-gray-300 min-w-[120px]">
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, rowIdx) => (
+              <tr key={rowIdx}>
+                <td className="border border-gray-700 bg-gray-800/50 p-2 text-sm text-white">
+                  {row}
+                </td>
+                {columns.map((col, colIdx) => {
+                  const isSelected = currentAnswers[rowIdx] === col;
+                  return (
+                    <td
+                      key={colIdx}
+                      onClick={() => handleCellClick(rowIdx, col)}
+                      className={`border border-gray-700 p-2 text-center cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-purple-500/30 text-purple-300 font-semibold'
+                          : 'bg-gray-900/50 hover:bg-gray-800'
+                      }`}
+                    >
+                      {isSelected ? '✓' : ''}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {Object.keys(currentAnswers).length > 0 && (
+        <div className="mt-3 p-2 bg-gray-800/50 rounded text-xs text-gray-400">
+          <strong>Your selections:</strong>
+          <ul className="mt-1 space-y-1">
+            {Object.entries(currentAnswers).map(([rowIdx, colValue]) => (
+              <li key={rowIdx}>
+                • {rows[parseInt(rowIdx)]} → {colValue}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

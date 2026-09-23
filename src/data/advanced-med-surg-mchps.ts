@@ -321,13 +321,14 @@ export const advancedMedSurgMCHPS = {
     {
       number: 32,
       text: "The nurse is caring for a 58-year-old client who was admitted to the medical unit with liver cirrhosis. The nurse reviews the client history physical, vital signs and laboratory findings. Indicate whether the following interventions are indicated or not indicated.",
-      choices: [
+      type: "matrix",
+      rows: [
         "Increase supplemental oxygen flow rate",
         "Discontinue intravenous (IV) fluids",
         "Draw complete blood count STAT",
         "Insert nasogastric tube (NGT) to low suction"
       ],
-      type: "matrix"
+      columns: ["Indicated", "Not Indicated"]
     },
     {
       number: 33,
@@ -345,14 +346,15 @@ export const advancedMedSurgMCHPS = {
     {
       number: 34,
       text: "The nurse is caring for a 58-year-old client who was admitted to the medical unit with liver cirrhosis and had a blood transfusion and endoscopic procedure for esophageal varices three days ago. The nurse begins to plan for the client's discharge and performs a focused assessment. For each client finding, indicate whether the clinical presentation has improved, is unchanged or worse.",
-      choices: [
+      type: "matrix",
+      rows: [
         "Temperature",
         "Ascites",
         "Blood Pressure",
         "Edema",
         "Hemoglobin"
       ],
-      type: "matrix"
+      columns: ["Improved", "Unchanged", "Worse"]
     },
     {
       number: 35,
@@ -493,14 +495,15 @@ export const advancedMedSurgMCHPS = {
     {
       number: 48,
       text: "The client diagnosed with a traumatic brain injury (TBI) is experiencing increased intracranial pressure (ICP). The provider orders mannitol. For each intervention, specify if the intervention is indicated or not indicated for the clients care.",
-      choices: [
+      type: "matrix",
+      rows: [
         "Monitor cardiac rhythm during administration",
         "Do not administer if blood pressure is less than 90/60",
         "Assess IM injection site for phlebitis",
         "Use a filter needle when administering the prescription",
         "Monitor the serum osmolarity during administration"
       ],
-      type: "matrix"
+      columns: ["Indicated", "Not Indicated"]
     },
     {
       number: 49,
