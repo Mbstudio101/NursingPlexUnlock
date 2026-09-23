@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Flag, CheckCircle2, Clock, List, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
-import { questions, examTitle } from './data/questions';
+import { allScrapedExams } from './data/allScrapedQuestions';
 import { interactiveQuestions } from './data/interactiveData';
 import { 
   NumericInput, 
@@ -14,7 +14,12 @@ import {
 
 type AnswerMap = Record<number, number[]>; // question number -> selected choice indices
 
-export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
+interface QuizViewProps {
+  onExit?: () => void;
+  examId?: string;
+}
+
+export default function QuizView({ onExit, examId = 'rn-hesi-exit-mcphs' }: QuizViewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [interactiveAnswers, setInteractiveAnswers] = useState<Record<number, any>>({});
@@ -23,6 +28,11 @@ export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
   const [showReview, setShowReview] = useState(false);
   const [startTime] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
+
+  // Get the selected exam
+  const selectedExam = allScrapedExams.find(exam => exam.id === examId) || allScrapedExams[0];
+  const questions = selectedExam.questions;
+  const examTitle = selectedExam.title;
 
   // Update timer every second
   useEffect(() => {
@@ -130,6 +140,8 @@ export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
         onBack={() => setShowReview(false)} 
         onReset={resetQuiz}
         onJumpTo={(idx) => { setShowReview(false); setCurrentIndex(idx); }}
+        questions={questions}
+        isAnswered={isAnswered}
       />
     );
   }
@@ -399,7 +411,7 @@ export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
               ) : currentQuestion.choices.length > 0 && !currentQuestion.choices[0].startsWith('(') ? (
                 /* Standard multiple choice */
                 <div className="space-y-3">
-                  {currentQuestion.choices.map((choice, i) => {
+                  {currentQuestion.choices.map((choice: string, i: number) => {
                     const isSelected = (answers[currentQuestion.number] || []).includes(i);
                     
                     return (
@@ -512,12 +524,14 @@ export default function QuizView({ onExit }: { onExit?: () => void } = {}) {
 }
 
 // Review View Component
-function ReviewView({ answers, flagged, onBack, onReset, onJumpTo }: {
+function ReviewView({ answers, flagged, onBack, onReset, onJumpTo, questions, isAnswered }: {
   answers: AnswerMap;
   flagged: Set<number>;
   onBack: () => void;
   onReset: () => void;
   onJumpTo: (index: number) => void;
+  questions: any[];
+  isAnswered: (qNum: number) => boolean;
 }) {
   const answeredCount = Object.keys(answers).length;
   const flaggedCount = flagged.size;
@@ -573,8 +587,8 @@ function ReviewView({ answers, flagged, onBack, onReset, onJumpTo }: {
 
         {/* Question list */}
         <div className="space-y-2">
-          {questions.map((q, idx) => {
-            const answered = isAnswered(q.number, answers);
+          {questions.map((q: any, idx: number) => {
+            const answered = isAnswered(q.number);
             const isFlag = flagged.has(q.number);
             const selectedChoices = answers[q.number] || [];
 

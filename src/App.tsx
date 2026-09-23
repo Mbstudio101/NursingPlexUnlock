@@ -3,6 +3,7 @@ import { Shield, BookOpen, ChevronDown, ChevronUp, Copy, Check, Zap, AlertTriang
 import ScrapedQuestions from './ScrapedQuestions';
 import QuizView from './QuizView';
 import ExamDatabaseView from './ExamDatabaseView';
+import { ExamSelector } from './components/ExamSelector';
 
 // The bookmarklet script - TARGETED at actual NursingPlex DOM structure
 const BOOKMARKLET_SCRIPT = `javascript:void(function(){
@@ -208,7 +209,8 @@ function App() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState<'console' | 'bookmarklet'>('console');
-  const [view, setView] = useState<'home' | 'scraped' | 'quiz' | 'database'>('home');
+  const [view, setView] = useState<'home' | 'scraped' | 'quiz' | 'database' | 'select-exam'>('home');
+  const [selectedExamId, setSelectedExamId] = useState<string>('rn-hesi-exit-mcphs');
 
   // Hooks must be called unconditionally - BEFORE any early returns
   useEffect(() => {
@@ -217,11 +219,33 @@ function App() {
   }, [darkMode]);
 
   if (view === 'scraped') {
-    return <ScrapedQuestions onExit={() => setView('home')} onStartQuiz={() => setView('quiz')} />;
+    return <ScrapedQuestions onExit={() => setView('home')} onStartQuiz={() => setView('select-exam')} />;
+  }
+
+  if (view === 'select-exam') {
+    return (
+      <div className="min-h-screen bg-gray-950">
+        <ExamSelector 
+          onSelectExam={(examId) => {
+            setSelectedExamId(examId);
+            setView('quiz');
+          }}
+          currentExamId={selectedExamId}
+        />
+        <div className="text-center mt-8">
+          <button
+            onClick={() => setView('home')}
+            className="px-6 py-3 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+          >
+            ← Back to Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (view === 'quiz') {
-    return <QuizView onExit={() => setView('home')} />;
+    return <QuizView onExit={() => setView('select-exam')} examId={selectedExamId} />;
   }
 
   if (view === 'database') {
@@ -326,7 +350,7 @@ function App() {
             {/* Proof it works */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
-                onClick={() => setView('quiz')}
+                onClick={() => setView('select-exam')}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-purple-500/20"
               >
                 <GraduationCap className="w-5 h-5" />
@@ -370,7 +394,7 @@ function App() {
             </p>
             
             <button
-              onClick={() => setView('quiz')}
+              onClick={() => setView('select-exam')}
               className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white text-xl font-bold hover:scale-110 transition-transform shadow-2xl shadow-purple-500/40 animate-pulse"
             >
               <GraduationCap className="w-7 h-7" />
@@ -691,7 +715,7 @@ function App() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => setView('quiz')}
+              onClick={() => setView('select-exam')}
               className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-purple-500/25"
             >
               <GraduationCap className="w-5 h-5" />

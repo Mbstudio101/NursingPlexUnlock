@@ -1,15 +1,23 @@
 import { useState } from 'react';
 import { ArrowLeft, Search, Download, FileText, CheckCircle2, AlertCircle, BookOpen } from 'lucide-react';
-import { questions, examTitle, totalQuestions, totalPages, freeQuestions } from './data/questions';
+import { allScrapedExams } from './data/allScrapedQuestions';
 
 export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () => void; onStartQuiz?: () => void } = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAll, setShowAll] = useState(false);
   const [filter, setFilter] = useState<'all' | 'free' | 'locked'>('all');
+  const [selectedExamId, setSelectedExamId] = useState('rn-hesi-exit-mcphs');
 
-  const filteredQuestions = questions.filter(q => {
+  const selectedExam = allScrapedExams.find(exam => exam.id === selectedExamId) || allScrapedExams[0];
+  const questions = selectedExam.questions;
+  const examTitle = selectedExam.title;
+  const totalQuestions = selectedExam.totalQuestions;
+  const totalPages = Math.ceil(totalQuestions / 4);
+  const freeQuestions = Math.min(10, totalQuestions);
+
+  const filteredQuestions = questions.filter((q: any) => {
     const matchesSearch = q.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.choices.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()));
+      q.choices.some((c: string) => c.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFilter = filter === 'all' || 
       (filter === 'free' && q.isFree) || 
       (filter === 'locked' && !q.isFree);
@@ -19,9 +27,9 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
   const displayQuestions = showAll ? filteredQuestions : filteredQuestions.slice(0, 15);
 
   const handleExport = () => {
-    const text = questions.map(q => {
+    const text = questions.map((q: any) => {
       let result = `Q${q.number}. ${q.text}\n`;
-      q.choices.forEach((c, i) => {
+      q.choices.forEach((c: string, i: number) => {
         result += `   ${String.fromCharCode(65 + i)}) ${c}\n`;
       });
       return result;
@@ -31,7 +39,7 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'nursing-questions.txt';
+    a.download = `${examTitle.replace(/\s+/g, '-')}-questions.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -48,7 +56,17 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
             </button>
             <div>
               <h1 className="text-lg font-bold">Scraped Questions</h1>
-              <p className="text-xs text-gray-400">{examTitle}</p>
+              <select
+                value={selectedExamId}
+                onChange={(e) => setSelectedExamId(e.target.value)}
+                className="text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-300 focus:outline-none focus:border-emerald-500"
+              >
+                {allScrapedExams.map(exam => (
+                  <option key={exam.id} value={exam.id}>
+                    {exam.title} ({exam.totalQuestions}q)
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -199,7 +217,7 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
                   <p className="text-white mb-4 leading-relaxed text-sm md:text-base">{q.text}</p>
                   {q.choices.length > 0 && q.choices[0] !== '(Fill in the blank - numeric value)' && q.choices[0] !== '(Fill in the blanks)' && q.choices[0] !== '(Drag and drop diagram)' && q.choices[0] !== '(Drag and drop - drug classification and treatment goals)' && q.choices[0] !== '(Drag and drop - drug classification and medication action)' && q.choices[0] !== '(Drag and drop to complete sentence about PCI)' && q.choices[0] !== '(Click the chosen location on diagram)' && (
                     <div className="space-y-2">
-                      {q.choices.map((choice, i) => (
+                      {q.choices.map((choice: string, i: number) => (
                         <div key={i} className="flex items-start gap-3 text-sm">
                           <span className="flex-shrink-0 w-6 h-6 rounded bg-gray-800 flex items-center justify-center text-xs font-medium text-gray-400">
                             {String.fromCharCode(65 + i)}
