@@ -4,6 +4,7 @@ import { atiFundamentals2026 } from './ati-fundamentals-2026';
 import { atiMedSurg2026 } from './ati-med-surg-2026';
 import { atiPharmacology2026 } from './ati-pharmacology-2026';
 import { sp26AdvancedMedSurg } from './sp26-advanced-med-surg';
+import { advancedMedSurgHealthWellness } from './advanced-med-surg-health-wellness';
 
 export interface ExamInfo {
   id: string;
@@ -22,6 +23,7 @@ console.log('ATI Fundamentals questions:', atiFundamentals2026?.questions?.lengt
 console.log('ATI Med-Surg questions:', atiMedSurg2026?.questions?.length || 0);
 console.log('ATI Pharmacology questions:', atiPharmacology2026?.questions?.length || 0);
 console.log('SP26 Advanced Med-Surg questions:', sp26AdvancedMedSurg?.questions?.length || 0);
+console.log('Advanced Med-Surg Health Wellness questions:', advancedMedSurgHealthWellness?.questions?.length || 0);
 
 export const allScrapedExams: ExamInfo[] = [
   {
@@ -68,6 +70,15 @@ export const allScrapedExams: ExamInfo[] = [
     totalQuestions: 40,
     scrapedDate: '2024-01-15',
     questions: sp26AdvancedMedSurg?.questions || []
+  },
+  {
+    id: 'rn-advanced-med-surg-health-wellness',
+    title: 'Advanced Med-Surg/Health And Wellness Proctored Exam (MCPHS)',
+    category: 'RN',
+    subcategory: 'Regular',
+    totalQuestions: 50,
+    scrapedDate: '2024-01-15',
+    questions: advancedMedSurgHealthWellness?.questions || []
   }
 ];
 
