@@ -56,17 +56,7 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
             </button>
             <div>
               <h1 className="text-lg font-bold">Scraped Questions</h1>
-              <select
-                value={selectedExamId}
-                onChange={(e) => setSelectedExamId(e.target.value)}
-                className="text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-300 focus:outline-none focus:border-emerald-500"
-              >
-                {allScrapedExams.map(exam => (
-                  <option key={exam.id} value={exam.id}>
-                    {exam.title} ({exam.totalQuestions}q)
-                  </option>
-                ))}
-              </select>
+              <p className="text-xs text-gray-400">Select an exam to view questions</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -94,6 +84,40 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
         </div>
       </header>
 
+      {/* Exam Selector */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <h2 className="text-xl font-bold mb-4">Available Exams</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {allScrapedExams.map((exam) => (
+            <button
+              key={exam.id}
+              onClick={() => setSelectedExamId(exam.id)}
+              className={`p-4 rounded-lg border-2 transition-all hover:scale-105 text-left ${
+                selectedExamId === exam.id
+                  ? 'border-emerald-500 bg-emerald-500/10'
+                  : 'border-gray-700 bg-gray-800/50 hover:border-emerald-400'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold px-2 py-1 rounded bg-blue-500/20 text-blue-400">
+                  {exam.category}
+                </span>
+                <span className="text-xs text-gray-400">{exam.subcategory}</span>
+              </div>
+              <h3 className="text-sm font-bold mb-1 text-white">{exam.title}</h3>
+              <div className="text-xs text-gray-400">
+                {exam.totalQuestions} questions
+              </div>
+              {selectedExamId === exam.id && (
+                <div className="mt-2 text-xs text-emerald-400 font-semibold">
+                  ✓ Currently viewing
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Success Banner */}
       <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border-b border-emerald-500/20">
         <div className="max-w-6xl mx-auto px-4 py-6">
@@ -102,10 +126,9 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
               <CheckCircle2 className="w-6 h-6 text-emerald-400" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold mb-2">✓ Script Successfully Scraped All 127 Questions!</h2>
+              <h2 className="text-xl font-bold mb-2">✓ {examTitle}</h2>
               <p className="text-gray-400 text-sm mb-4">
-                This proves the unlock script works. All content was extracted from the HTML — the blur was purely CSS (3px blur + 60% opacity + pointer-events:none). 
-                The text was always there in the DOM.
+                Successfully scraped {totalQuestions} questions with all answer choices. Click any exam card above to switch between exams.
               </p>
               <div className="flex flex-wrap gap-3 text-xs">
                 <span className="px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -120,9 +143,6 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
                 <span className="px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                   ✗ No Rationales (server-gated)
                 </span>
-                <span className="px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
-                  ✗ No Correct Answers for Q11-127
-                </span>
               </div>
             </div>
           </div>
@@ -133,7 +153,7 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-emerald-400">{totalQuestions}</div>
+            <div className="text-2xl font-bold text-emerald-400">{questions.length}</div>
             <div className="text-xs text-gray-400 mt-1">Total Questions</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
@@ -141,12 +161,14 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
             <div className="text-xs text-gray-400 mt-1">Pages</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-purple-400">{freeQuestions}</div>
-            <div className="text-xs text-gray-400 mt-1">Free (with answers)</div>
+            <div className="text-2xl font-bold text-purple-400">{allScrapedExams.length}</div>
+            <div className="text-xs text-gray-400 mt-1">Total Exams</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-amber-400">{totalQuestions - freeQuestions}</div>
-            <div className="text-xs text-gray-400 mt-1">Unblurred (no answers)</div>
+            <div className="text-2xl font-bold text-amber-400">
+              {allScrapedExams.reduce((sum, exam) => sum + exam.totalQuestions, 0)}
+            </div>
+            <div className="text-xs text-gray-400 mt-1">All Questions Combined</div>
           </div>
         </div>
       </div>
@@ -260,7 +282,7 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
           <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-gray-400">
             <strong className="text-amber-400">Note:</strong> Correct answers are only highlighted (in cyan) for the first 10 free questions on NursingPlex. 
-            For questions 11-127, the answer highlighting data is not sent to your browser — it's server-side gated. 
+            For locked questions, the answer highlighting data is not sent to your browser — it's server-side gated. 
             All question text and answer choices above were successfully extracted because they were always in the HTML, just visually blurred.
           </div>
         </div>
@@ -270,7 +292,7 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
       <footer className="border-t border-gray-800 py-8">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <p className="text-sm text-gray-500 mb-2">
-            All 127 questions scraped from NursingPlex.com — proving the unlock script works.
+            {allScrapedExams.reduce((sum, exam) => sum + exam.totalQuestions, 0)} total questions scraped from {allScrapedExams.length} exams — proving the unlock script works.
           </p>
           <p className="text-xs text-gray-600">
             For educational purposes only. Consider supporting NursingPlex if you find their content valuable.
