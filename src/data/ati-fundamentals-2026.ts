@@ -1,4 +1,4 @@
-// ATI RN Fundamentals 2026 Proctored Exam - 69 Questions
+// ATI RN Fundamentals 2026 Proctored Exam - Complete 69 Questions
 // Source: https://nursingplex.com/review/ati-rn-fundamentals-2026-proctored-exam-1778745801
 
 export const atiFundamentals2026 = {
