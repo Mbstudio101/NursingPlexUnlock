@@ -4,6 +4,7 @@ import ScrapedQuestions from './ScrapedQuestions';
 import QuizView from './QuizView';
 import ExamDatabaseView from './ExamDatabaseView';
 import { ExamSelector } from './components/ExamSelector';
+import TestData from './TestData';
 
 // The bookmarklet script - TARGETED at actual NursingPlex DOM structure
 const BOOKMARKLET_SCRIPT = `javascript:void(function(){
@@ -209,7 +210,7 @@ function App() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState<'console' | 'bookmarklet'>('console');
-  const [view, setView] = useState<'home' | 'scraped' | 'quiz' | 'database' | 'select-exam'>('home');
+  const [view, setView] = useState<'home' | 'scraped' | 'quiz' | 'database' | 'select-exam' | 'test'>('home');
   const [selectedExamId, setSelectedExamId] = useState<string>('rn-hesi-exit-mcphs');
 
   // Hooks must be called unconditionally - BEFORE any early returns
@@ -250,6 +251,22 @@ function App() {
 
   if (view === 'database') {
     return <ExamDatabaseView onExit={() => setView('home')} />;
+  }
+
+  if (view === 'test') {
+    return (
+      <div>
+        <TestData />
+        <div className="text-center mt-8 pb-8">
+          <button
+            onClick={() => setView('home')}
+            className="px-6 py-3 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+          >
+            ← Back to Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const handleCopyScript = () => {
@@ -400,6 +417,13 @@ function App() {
               <GraduationCap className="w-7 h-7" />
               START QUIZ NOW
               <span className="text-2xl">→</span>
+            </button>
+            
+            <button
+              onClick={() => setView('test')}
+              className="mt-4 px-6 py-3 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors text-sm"
+            >
+              🔧 Debug: Check Data Loading
             </button>
             
             <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm">
