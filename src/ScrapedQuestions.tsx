@@ -9,6 +9,8 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
   const [selectedExamId, setSelectedExamId] = useState('rn-hesi-exit-mcphs');
   const [dropdownAnswers, setDropdownAnswers] = useState<Record<string, Record<number, string[]>>>({});
   const [matrixAnswers, setMatrixAnswers] = useState<Record<string, Record<number, Record<number, string>>>>({});
+  const [diagramAnswers, setDiagramAnswers] = useState<Record<string, Record<number, string>>>({});
+  const [dragDropAnswers, setDragDropAnswers] = useState<Record<string, Record<number, Record<string, string>>>>({});
 
   const selectedExam = allScrapedExams.find(exam => exam.id === selectedExamId) || allScrapedExams[0];
   const questions = selectedExam.questions || [];
@@ -316,7 +318,25 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
                           setMatrixAnswers={setMatrixAnswers}
                         />
                       )}
-                      {q.type && q.type !== 'dropdown' && q.type !== 'numeric' && q.type !== 'ordering' && q.type !== 'matrix' && (
+                      {(q.type === 'diagram' || q.type === 'diagram-click') && (
+                        <InteractiveDiagram
+                          questionNumber={q.number}
+                          examId={selectedExamId}
+                          text={q.text}
+                          diagramAnswers={diagramAnswers}
+                          setDiagramAnswers={setDiagramAnswers}
+                        />
+                      )}
+                      {q.type === 'drag-drop' && (
+                        <InteractiveDragDrop
+                          questionNumber={q.number}
+                          examId={selectedExamId}
+                          text={q.text}
+                          dragDropAnswers={dragDropAnswers}
+                          setDragDropAnswers={setDragDropAnswers}
+                        />
+                      )}
+                      {q.type && q.type !== 'dropdown' && q.type !== 'numeric' && q.type !== 'ordering' && q.type !== 'matrix' && q.type !== 'diagram' && q.type !== 'diagram-click' && q.type !== 'drag-drop' && (
                         <div className="text-xs text-purple-400 italic">
                           Interactive question type: {q.type}
                         </div>
@@ -544,6 +564,146 @@ function InteractiveMatrix({
             {Object.entries(currentAnswers).map(([rowIdx, colValue]) => (
               <li key={rowIdx}>
                 • {rows[parseInt(rowIdx)]} → {colValue}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Interactive Diagram Component
+function InteractiveDiagram({ 
+  questionNumber, 
+  examId, 
+  text,
+  diagramAnswers,
+  setDiagramAnswers 
+}: {
+  questionNumber: number;
+  examId: string;
+  text: string;
+  diagramAnswers: Record<string, Record<number, string>>;
+  setDiagramAnswers: (answers: Record<string, Record<number, string>>) => void;
+}) {
+  const currentAnswer = diagramAnswers[examId]?.[questionNumber] || '';
+
+  const handleLocationSelect = (location: string) => {
+    const newAnswers = { ...diagramAnswers };
+    if (!newAnswers[examId]) {
+      newAnswers[examId] = {};
+    }
+    newAnswers[examId][questionNumber] = location;
+    setDiagramAnswers(newAnswers);
+  };
+
+  // Common anatomical locations for nursing questions
+  const locations = [
+    'A - Upper right quadrant',
+    'B - Upper left quadrant',
+    'C - Lower right quadrant',
+    'D - Lower left quadrant',
+    'E - Midline upper',
+    'F - Midline lower'
+  ];
+
+  return (
+    <div className="mt-3 p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+      <p className="text-sm text-purple-400 mb-3">Select the correct location:</p>
+      <div className="grid grid-cols-2 gap-2">
+        {locations.map((location) => (
+          <button
+            key={location}
+            onClick={() => handleLocationSelect(location)}
+            className={`px-3 py-2 rounded border text-sm transition-all ${
+              currentAnswer === location
+                ? 'bg-purple-500/30 border-purple-500 text-purple-300 font-semibold'
+                : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            {location}
+          </button>
+        ))}
+      </div>
+      {currentAnswer && (
+        <div className="mt-3 p-2 bg-gray-800/50 rounded text-xs text-gray-400">
+          <strong>Your selection:</strong> {currentAnswer}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Interactive Drag-Drop Component
+function InteractiveDragDrop({ 
+  questionNumber, 
+  examId, 
+  text,
+  dragDropAnswers,
+  setDragDropAnswers 
+}: {
+  questionNumber: number;
+  examId: string;
+  text: string;
+  dragDropAnswers: Record<string, Record<number, Record<string, string>>>;
+  setDragDropAnswers: (answers: Record<string, Record<number, Record<string, string>>>) => void;
+}) {
+  const currentAnswers = dragDropAnswers[examId]?.[questionNumber] || {};
+
+  const handleCategorySelect = (item: string, category: string) => {
+    const newAnswers = { ...dragDropAnswers };
+    if (!newAnswers[examId]) {
+      newAnswers[examId] = {};
+    }
+    if (!newAnswers[examId][questionNumber]) {
+      newAnswers[examId][questionNumber] = {};
+    }
+    newAnswers[examId][questionNumber][item] = category;
+    setDragDropAnswers(newAnswers);
+  };
+
+  // Extract items from the question text (assuming they're in the choices)
+  const items = text.includes('Select') 
+    ? ['Condition', 'Nursing Action 1', 'Nursing Action 2', 'Parameter 1', 'Parameter 2']
+    : ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
+
+  const categories = ['Category A', 'Category B', 'Category C'];
+
+  return (
+    <div className="mt-3 p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+      <p className="text-sm text-purple-400 mb-3">Drag items to the appropriate category:</p>
+      <div className="space-y-3">
+        {items.map((item) => (
+          <div key={item} className="flex items-center gap-3">
+            <div className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm text-white">
+              {item}
+            </div>
+            <div className="flex gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => handleCategorySelect(item, category)}
+                  className={`px-3 py-2 rounded border text-xs transition-all ${
+                    currentAnswers[item] === category
+                      ? 'bg-purple-500/30 border-purple-500 text-purple-300 font-semibold'
+                      : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {Object.keys(currentAnswers).length > 0 && (
+        <div className="mt-3 p-2 bg-gray-800/50 rounded text-xs text-gray-400">
+          <strong>Your assignments:</strong>
+          <ul className="mt-1 space-y-1">
+            {Object.entries(currentAnswers).map(([item, category]) => (
+              <li key={item}>
+                • {item} → {category}
               </li>
             ))}
           </ul>
