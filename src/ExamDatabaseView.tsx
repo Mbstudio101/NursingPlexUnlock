@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Database, Plus, Edit2, Trash2, X, Check, Search, Filter } from 'lucide-react';
+import { Database, Plus, Edit2, Trash2, X, Check, Search, Filter, Folder, FileText, ChevronRight } from 'lucide-react';
 import { 
   examDatabase, 
   examCategories, 
@@ -9,18 +9,30 @@ import {
   getExamStats,
   type Exam 
 } from './data/examDatabase';
+import { allExams, getExamsByCategory, getExamStats as getAllExamStats } from './data/allExams';
 
 export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {}) {
-  const [exams, setExams] = useState(examDatabase);
+  const [exams, setExams] = useState(allExams);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [stats, setStats] = useState(getExamStats());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['RN_Exit']));
+  const [stats, setStats] = useState(getAllExamStats());
 
   const refreshStats = () => {
-    setStats(getExamStats());
-    setExams([...examDatabase]);
+    setStats(getAllExamStats());
+    setExams([...allExams]);
+  };
+
+  const toggleFolder = (folderId: string) => {
+    const newExpanded = new Set(expandedFolders);
+    if (newExpanded.has(folderId)) {
+      newExpanded.delete(folderId);
+    } else {
+      newExpanded.add(folderId);
+    }
+    setExpandedFolders(newExpanded);
   };
 
   const handleDelete = (id: string) => {
@@ -36,6 +48,9 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
     const matchesCategory = filterCategory === 'all' || exam.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // If searching or filtering, show flat list; otherwise show folder view
+  const showFolderView = !searchTerm && filterCategory === 'all';
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -82,8 +97,8 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
             <div className="text-xs text-gray-400 mt-1">Total Questions</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <div className="text-3xl font-bold text-purple-400">{stats.activeExams}</div>
-            <div className="text-xs text-gray-400 mt-1">Active Exams</div>
+            <div className="text-3xl font-bold text-purple-400">{stats.scrapedExams}</div>
+            <div className="text-xs text-gray-400 mt-1">Scraped Exams</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
             <div className="text-3xl font-bold text-amber-400">
@@ -132,68 +147,155 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
           </div>
         </div>
 
-        {/* Exams List */}
-        <div className="space-y-3">
-          {filteredExams.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              No exams found. {exams.length === 0 && "Click 'Add Exam' to get started!"}
-            </div>
-          ) : (
-            filteredExams.map(exam => {
-              const category = examCategories.find(c => c.id === exam.category);
-              const subcategory = category?.subcategories.find(s => s.id === exam.subcategory);
-              
-              return (
-                <div key={exam.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2 py-0.5 rounded text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                          {category?.name}
-                        </span>
-                        <span className="px-2 py-0.5 rounded text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                          {subcategory?.name}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded text-xs border ${
-                          exam.status === 'active' 
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-                        }`}>
-                          {exam.status}
-                        </span>
+        {/* Folder Structure View or Filtered List */}
+        {showFolderView ? (
+          <div className="space-y-4">
+            {examCategories.map(category => {
+            const categoryExams = exams.filter(e => e.category === category.id);
+            if (categoryExams.length === 0) return null;
+            
+            const isExpanded = expandedFolders.has(category.id);
+            
+            return (
+              <div key={category.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                {/* Category Header */}
+                <button
+                  onClick={() => toggleFolder(category.id)}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Folder className={`w-5 h-5 ${isExpanded ? 'text-yellow-400' : 'text-gray-400'}`} />
+                    <h3 className="text-lg font-semibold">{category.name}</h3>
+                    <span className="px-2 py-0.5 rounded text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      {categoryExams.length} exams
+                    </span>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                </button>
+                
+                {/* Subcategories */}
+                {isExpanded && (
+                  <div className="border-t border-gray-800">
+                    {category.subcategories.map(subcategory => {
+                      const subcategoryExams = categoryExams.filter(e => e.subcategory === subcategory.id);
+                      if (subcategoryExams.length === 0) return null;
+                      
+                      return (
+                        <div key={subcategory.id} className="border-b border-gray-800 last:border-b-0">
+                          {/* Subcategory Header */}
+                          <div className="flex items-center gap-2 px-6 py-3 bg-gray-800/30">
+                            <Folder className="w-4 h-4 text-purple-400" />
+                            <h4 className="text-sm font-medium text-gray-300">{subcategory.name}</h4>
+                            <span className="text-xs text-gray-500">({subcategoryExams.length})</span>
+                          </div>
+                          
+                          {/* Exams in this subcategory */}
+                          <div className="divide-y divide-gray-800">
+                            {subcategoryExams.map(exam => (
+                              <div key={exam.id} className="px-6 py-4 hover:bg-gray-800/20 transition-colors">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <FileText className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                                      <h5 className="font-medium text-sm">{exam.title}</h5>
+                                    </div>
+                                    <div className="flex flex-wrap gap-3 text-xs text-gray-400 ml-6">
+                                      <span>📝 {exam.totalQuestions} questions</span>
+                                      {exam.totalPages && <span>📄 {exam.totalPages} pages</span>}
+                                      {exam.freeQuestions !== undefined && <span>🆓 {exam.freeQuestions} free</span>}
+                                      {exam.dateScraped && (
+                                        <span className="text-emerald-400">✓ Scraped {exam.dateScraped}</span>
+                                      )}
+                                    </div>
+                                    {exam.notes && (
+                                      <p className="text-xs text-gray-500 mt-1 ml-6 italic">{exam.notes}</p>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-2 flex-shrink-0">
+                                    <button
+                                      onClick={() => setEditingExam(exam)}
+                                      className="p-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDelete(exam.id)}
+                                      className="p-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          </div>
+        ) : (
+          /* Filtered List View */
+          <div className="space-y-3">
+            {filteredExams.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                No exams found matching your search.
+              </div>
+            ) : (
+              filteredExams.map(exam => {
+                const category = examCategories.find(c => c.id === exam.category);
+                const subcategory = category?.subcategories.find(s => s.id === exam.subcategory);
+                
+                return (
+                  <div key={exam.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="px-2 py-0.5 rounded text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            {category?.name}
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            {subcategory?.name}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-semibold mb-1">{exam.title}</h3>
+                        <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                          <span>📝 {exam.totalQuestions} questions</span>
+                          {exam.totalPages && <span>📄 {exam.totalPages} pages</span>}
+                          {exam.freeQuestions !== undefined && <span>🆓 {exam.freeQuestions} free</span>}
+                          {exam.dateScraped && (
+                            <span className="text-emerald-400">✓ Scraped {exam.dateScraped}</span>
+                          )}
+                        </div>
+                        {exam.notes && (
+                          <p className="text-xs text-gray-500 mt-2 italic">{exam.notes}</p>
+                        )}
                       </div>
-                      <h3 className="text-lg font-semibold mb-1">{exam.title}</h3>
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                        <span>📝 {exam.totalQuestions} questions</span>
-                        {exam.totalPages && <span>📄 {exam.totalPages} pages</span>}
-                        {exam.freeQuestions !== undefined && <span>🆓 {exam.freeQuestions} free</span>}
-                        <span>📅 Added {exam.dateAdded}</span>
-                        <span>🔗 {exam.source}</span>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => setEditingExam(exam)}
+                          className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(exam.id)}
+                          className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      {exam.notes && (
-                        <p className="text-xs text-gray-500 mt-2 italic">{exam.notes}</p>
-                      )}
-                    </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => setEditingExam(exam)}
-                        className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(exam.id)}
-                        className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Modal */}
