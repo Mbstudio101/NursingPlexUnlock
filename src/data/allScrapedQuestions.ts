@@ -3,6 +3,7 @@ import { questions as hesiQuestions } from './questions';
 import { atiFundamentals2026 } from './ati-fundamentals-2026';
 import { atiMedSurg2026 } from './ati-med-surg-2026';
 import { atiPharmacology2026 } from './ati-pharmacology-2026';
+import { sp26AdvancedMedSurg } from './sp26-advanced-med-surg';
 
 export interface ExamInfo {
   id: string;
@@ -20,6 +21,7 @@ console.log('HESI questions:', hesiQuestions?.length || 0);
 console.log('ATI Fundamentals questions:', atiFundamentals2026?.questions?.length || 0);
 console.log('ATI Med-Surg questions:', atiMedSurg2026?.questions?.length || 0);
 console.log('ATI Pharmacology questions:', atiPharmacology2026?.questions?.length || 0);
+console.log('SP26 Advanced Med-Surg questions:', sp26AdvancedMedSurg?.questions?.length || 0);
 
 export const allScrapedExams: ExamInfo[] = [
   {
@@ -57,6 +59,15 @@ export const allScrapedExams: ExamInfo[] = [
     totalQuestions: 70,
     scrapedDate: '2024-01-15',
     questions: atiPharmacology2026?.questions || []
+  },
+  {
+    id: 'rn-sp26-advanced-med-surg',
+    title: 'SP26 504W Advanced Med-Surg Proctored Exam (Massachusetts College)',
+    category: 'RN',
+    subcategory: 'Regular',
+    totalQuestions: 40,
+    scrapedDate: '2024-01-15',
+    questions: sp26AdvancedMedSurg?.questions || []
   }
 ];
 

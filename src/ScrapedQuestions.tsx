@@ -249,6 +249,16 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
                         <span className="text-xs text-gray-500">Page {q.page}</span>
                       </div>
                       <p className="text-white mb-4 leading-relaxed text-sm md:text-base">{q.text}</p>
+                      {q.image && (
+                        <div className="mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                          <img 
+                            src={q.image} 
+                            alt={`Question ${q.number} image`}
+                            className="max-w-full h-auto rounded"
+                            style={{ maxHeight: '400px' }}
+                          />
+                        </div>
+                      )}
                       {q.choices && q.choices.length > 0 && q.choices[0] !== '(Fill in the blank - numeric value)' && q.choices[0] !== '(Fill in the blanks)' && q.choices[0] !== '(Drag and drop diagram)' && q.choices[0] !== '(Drag and drop - drug classification and treatment goals)' && q.choices[0] !== '(Drag and drop - drug classification and medication action)' && q.choices[0] !== '(Drag and drop to complete sentence about PCI)' && q.choices[0] !== '(Click the chosen location on diagram)' && (
                         <div className="space-y-2">
                           {q.choices.map((choice: string, i: number) => (
