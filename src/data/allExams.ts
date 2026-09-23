@@ -6,17 +6,18 @@ import type { Exam } from './examDatabase';
 export const allExams: Exam[] = [
   // ===== RN ATI EXAMS - MASSIVE QUESTION BANKS =====
   {
-    id: 'rn-ati-medical-surgical',
-    title: 'ATI Adult Medical-Surgical',
+    id: 'rn-ati-medical-surgical-2026',
+    title: 'ATI RN Adult Medical Surgical 2026 Proctored Exam',
     category: 'RN',
     subcategory: 'ati',
     examType: 'Medical-Surgical',
     source: 'NursingPlex',
-    totalQuestions: 4411,
+    totalQuestions: 97,
     dateAdded: '2024-01-15',
+    dateScraped: '2024-01-15',
     status: 'active',
-    url: 'https://nursingplex.com/ati-adult-medical-surgical-practice-exam',
-    notes: 'Comprehensive med-surg nursing covering all body systems and clinical scenarios'
+    url: 'https://nursingplex.com/review/ati-rn-adult-medical-surgical-2026-proctored-exam-1778495930',
+    notes: '✅ FULLY SCRAPED - 97 questions with all answer choices'
   },
   {
     id: 'rn-ati-maternal-newborn',
@@ -32,30 +33,32 @@ export const allExams: Exam[] = [
     notes: 'Antepartum, intrapartum, postpartum, and newborn care essentials'
   },
   {
-    id: 'rn-ati-fundamentals',
-    title: 'ATI Fundamentals',
+    id: 'rn-ati-fundamentals-2026',
+    title: 'ATI RN Fundamentals 2026 Proctored Exam',
     category: 'RN',
     subcategory: 'ati',
     examType: 'Fundamentals',
     source: 'NursingPlex',
-    totalQuestions: 3079,
+    totalQuestions: 69,
     dateAdded: '2024-01-15',
+    dateScraped: '2024-01-15',
     status: 'active',
-    url: 'https://nursingplex.com/ati-fundamentals-practice-exam',
-    notes: 'Core nursing fundamentals — assessment, safety, and infection control'
+    url: 'https://nursingplex.com/review/ati-rn-fundamentals-2026-proctored-exam-1778745801',
+    notes: '✅ FULLY SCRAPED - 69 questions with all answer choices'
   },
   {
-    id: 'rn-ati-pharmacology',
-    title: 'ATI Pharmacology',
+    id: 'rn-ati-pharmacology-2026',
+    title: 'ATI RN Pharmacology 2026 Proctored Exam',
     category: 'RN',
     subcategory: 'ati',
     examType: 'Pharmacology',
     source: 'NursingPlex',
-    totalQuestions: 2555,
+    totalQuestions: 70,
     dateAdded: '2024-01-15',
+    dateScraped: '2024-01-15',
     status: 'active',
-    url: 'https://nursingplex.com/ati-pharmacology-practice-exam',
-    notes: 'Drug classifications, mechanisms, side effects, and nursing implications'
+    url: 'https://nursingplex.com/review/ati-rn-pharmacology-2026-proctored-exam-1778567014',
+    notes: '✅ FULLY SCRAPED - 70 questions with all answer choices'
   },
   {
     id: 'rn-ati-obstetrics-pediatrics',
