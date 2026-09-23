@@ -5,6 +5,7 @@ import { atiMedSurg2026 } from './ati-med-surg-2026';
 import { atiPharmacology2026 } from './ati-pharmacology-2026';
 import { sp26AdvancedMedSurg } from './sp26-advanced-med-surg';
 import { advancedMedSurgHealthWellness } from './advanced-med-surg-health-wellness';
+import { advancedMedSurgMCHPS } from './advanced-med-surg-mchps';
 
 export interface ExamInfo {
   id: string;
@@ -24,6 +25,7 @@ console.log('ATI Med-Surg questions:', atiMedSurg2026?.questions?.length || 0);
 console.log('ATI Pharmacology questions:', atiPharmacology2026?.questions?.length || 0);
 console.log('SP26 Advanced Med-Surg questions:', sp26AdvancedMedSurg?.questions?.length || 0);
 console.log('Advanced Med-Surg Health Wellness questions:', advancedMedSurgHealthWellness?.questions?.length || 0);
+console.log('Advanced Med-Surg MCHPS questions:', advancedMedSurgMCHPS?.questions?.length || 0);
 
 export const allScrapedExams: ExamInfo[] = [
   {
@@ -79,6 +81,15 @@ export const allScrapedExams: ExamInfo[] = [
     totalQuestions: 50,
     scrapedDate: '2024-01-15',
     questions: advancedMedSurgHealthWellness?.questions || []
+  },
+  {
+    id: 'rn-advanced-med-surg-mchps',
+    title: 'Advanced Med Surg Proctored Exam (MCHPS)',
+    category: 'RN',
+    subcategory: 'Regular',
+    totalQuestions: 50,
+    scrapedDate: '2024-01-15',
+    questions: advancedMedSurgMCHPS?.questions || []
   }
 ];
 
