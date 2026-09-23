@@ -239,7 +239,8 @@ export const sp26AdvancedMedSurg = {
         "Magnesium.",
         "Adenosine.",
         "Epinephrine."
-      ]
+      ],
+      note: "This question references a telemetry strip image that is not available in the scraped content"
     },
     {
       number: 25,
@@ -284,7 +285,8 @@ export const sp26AdvancedMedSurg = {
         "Check the client's peripheral pulses.",
         "Administer adenosine intravenous push (IVP) to the client.",
         "Instructor the client to perform the Valsalva maneuver."
-      ]
+      ],
+      note: "This question references a cardiac rhythm image that is not available in the scraped content"
     },
     {
       number: 30,
@@ -294,7 +296,8 @@ export const sp26AdvancedMedSurg = {
         "ST Elevation.",
         "Wide QRS complexes.",
         "Sinus Arrhythmia."
-      ]
+      ],
+      note: "This question references an ECG image that is not available in the scraped content"
     },
     {
       number: 31,
@@ -304,7 +307,8 @@ export const sp26AdvancedMedSurg = {
         "Supraventricular Tachycardia.",
         "Atrial fibrillation.",
         "Sinus rhythm"
-      ]
+      ],
+      note: "This question references an EKG strip image that is not available in the scraped content"
     },
     {
       number: 32,
@@ -364,7 +368,8 @@ export const sp26AdvancedMedSurg = {
         "Place the client in a sitting position and administer oxygen.",
         "Call the Rapid response team to come and assess the client.",
         "Call a Code and initiate cardiopulmonary resuscitation"
-      ]
+      ],
+      note: "This question references an ECG image that is not available in the scraped content"
     },
     {
       number: 38,
@@ -382,7 +387,8 @@ export const sp26AdvancedMedSurg = {
       choices: [
         "A",
         "B"
-      ]
+      ],
+      note: "This question references ECG rhythm images (A and B) that are not available in the scraped content"
     },
     {
       number: 40,

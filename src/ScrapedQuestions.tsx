@@ -252,6 +252,13 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
                         <span className="text-xs text-gray-500">Page {q.page}</span>
                       </div>
                       <p className="text-white mb-4 leading-relaxed text-sm md:text-base">{q.text}</p>
+                      {q.note && (
+                        <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                          <p className="text-xs text-amber-400">
+                            <strong>Note:</strong> {q.note}
+                          </p>
+                        </div>
+                      )}
                       {q.image && (
                         <div className="mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
                           <img 
