@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Shield, BookOpen, ChevronDown, ChevronUp, Copy, Check, Zap, AlertTriangle, ExternalLink, Lock, Unlock, Eye, GraduationCap } from 'lucide-react';
+import { Shield, BookOpen, ChevronDown, ChevronUp, Copy, Check, Zap, AlertTriangle, ExternalLink, Lock, Unlock, Eye, GraduationCap, Database } from 'lucide-react';
 import ScrapedQuestions from './ScrapedQuestions';
 import QuizView from './QuizView';
+import ExamDatabaseView from './ExamDatabaseView';
 
 // The bookmarklet script - TARGETED at actual NursingPlex DOM structure
 const BOOKMARKLET_SCRIPT = `javascript:void(function(){
@@ -207,7 +208,7 @@ function App() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState<'console' | 'bookmarklet'>('console');
-  const [view, setView] = useState<'home' | 'scraped' | 'quiz'>('home');
+  const [view, setView] = useState<'home' | 'scraped' | 'quiz' | 'database'>('home');
 
   // Hooks must be called unconditionally - BEFORE any early returns
   useEffect(() => {
@@ -221,6 +222,10 @@ function App() {
 
   if (view === 'quiz') {
     return <QuizView onExit={() => setView('home')} />;
+  }
+
+  if (view === 'database') {
+    return <ExamDatabaseView onExit={() => setView('home')} />;
   }
 
   const handleCopyScript = () => {
@@ -333,6 +338,13 @@ function App() {
               >
                 <Eye className="w-5 h-5" />
                 View All 127 Questions →
+              </button>
+              <button
+                onClick={() => setView('database')}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-blue-500/20"
+              >
+                <Database className="w-5 h-5" />
+                Exam Database →
               </button>
             </div>
           </div>
