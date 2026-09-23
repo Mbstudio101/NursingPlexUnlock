@@ -9,15 +9,15 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
   const [selectedExamId, setSelectedExamId] = useState('rn-hesi-exit-mcphs');
 
   const selectedExam = allScrapedExams.find(exam => exam.id === selectedExamId) || allScrapedExams[0];
-  const questions = selectedExam.questions;
+  const questions = selectedExam.questions || [];
   const examTitle = selectedExam.title;
   const totalQuestions = selectedExam.totalQuestions;
   const totalPages = Math.ceil(totalQuestions / 4);
   const freeQuestions = Math.min(10, totalQuestions);
 
   const filteredQuestions = questions.filter((q: any) => {
-    const matchesSearch = q.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.choices.some((c: string) => c.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = q.text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (q.choices && q.choices.some((c: string) => c.toLowerCase().includes(searchTerm.toLowerCase())));
     const matchesFilter = filter === 'all' || 
       (filter === 'free' && q.isFree) || 
       (filter === 'locked' && !q.isFree);
@@ -29,9 +29,13 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
   const handleExport = () => {
     const text = questions.map((q: any) => {
       let result = `Q${q.number}. ${q.text}\n`;
-      q.choices.forEach((c: string, i: number) => {
-        result += `   ${String.fromCharCode(65 + i)}) ${c}\n`;
-      });
+      if (q.choices && q.choices.length > 0) {
+        q.choices.forEach((c: string, i: number) => {
+          result += `   ${String.fromCharCode(65 + i)}) ${c}\n`;
+        });
+      } else if (q.type) {
+        result += `   [Interactive question type: ${q.type}]\n`;
+      }
       return result;
     }).join('\n---\n\n');
     
@@ -209,70 +213,84 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
 
       {/* Questions List */}
       <div className="max-w-6xl mx-auto px-4 pb-16">
-        <div className="space-y-4">
-          {displayQuestions.map((q) => (
-            <div key={q.number} className={`bg-gray-900 border rounded-xl p-5 md:p-6 ${
-              q.isFree ? 'border-emerald-500/20' : 'border-gray-800'
-            }`}>
-              <div className="flex items-start gap-4">
-                <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-                  q.isFree ? 'bg-emerald-500/10' : 'bg-gray-800'
-                }`}>
-                  <span className={`text-sm font-bold ${q.isFree ? 'text-emerald-400' : 'text-gray-400'}`}>
-                    {q.number}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    {q.isFree && (
-                      <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        Free
-                      </span>
-                    )}
-                    {q.isCaseStudy && (
-                      <span className="px-2 py-0.5 rounded text-xs bg-orange-500/10 text-orange-400 border border-orange-500/20">
-                        Case Study
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-500">Page {q.page}</span>
-                  </div>
-                  <p className="text-white mb-4 leading-relaxed text-sm md:text-base">{q.text}</p>
-                  {q.choices.length > 0 && q.choices[0] !== '(Fill in the blank - numeric value)' && q.choices[0] !== '(Fill in the blanks)' && q.choices[0] !== '(Drag and drop diagram)' && q.choices[0] !== '(Drag and drop - drug classification and treatment goals)' && q.choices[0] !== '(Drag and drop - drug classification and medication action)' && q.choices[0] !== '(Drag and drop to complete sentence about PCI)' && q.choices[0] !== '(Click the chosen location on diagram)' && (
-                    <div className="space-y-2">
-                      {q.choices.map((choice: string, i: number) => (
-                        <div key={i} className="flex items-start gap-3 text-sm">
-                          <span className="flex-shrink-0 w-6 h-6 rounded bg-gray-800 flex items-center justify-center text-xs font-medium text-gray-400">
-                            {String.fromCharCode(65 + i)}
-                          </span>
-                          <span className="text-gray-300 pt-0.5">{choice}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {q.choices.length > 0 && (q.choices[0].includes('Fill in') || q.choices[0].includes('Drag and drop') || q.choices[0].includes('Click the')) && (
-                    <div className="text-xs text-gray-500 italic">{q.choices[0]}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {!showAll && filteredQuestions.length > 15 && (
-          <div className="mt-8 text-center">
-            <button
-              onClick={() => setShowAll(true)}
-              className="px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-emerald-500/20"
-            >
-              Show All {filteredQuestions.length} Questions
-            </button>
-          </div>
-        )}
-
-        {filteredQuestions.length === 0 && (
+        {questions.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            No questions found matching "{searchTerm}"
+            <p className="text-lg mb-2">No questions loaded for this exam</p>
+            <p className="text-sm">Please select a different exam or check back later.</p>
           </div>
+        ) : (
+          <>
+            <div className="space-y-4">
+              {displayQuestions.map((q) => (
+                <div key={q.number} className={`bg-gray-900 border rounded-xl p-5 md:p-6 ${
+                  q.isFree ? 'border-emerald-500/20' : 'border-gray-800'
+                }`}>
+                  <div className="flex items-start gap-4">
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                      q.isFree ? 'bg-emerald-500/10' : 'bg-gray-800'
+                    }`}>
+                      <span className={`text-sm font-bold ${q.isFree ? 'text-emerald-400' : 'text-gray-400'}`}>
+                        {q.number}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        {q.isFree && (
+                          <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            Free
+                          </span>
+                        )}
+                        {q.isCaseStudy && (
+                          <span className="px-2 py-0.5 rounded text-xs bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                            Case Study
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-500">Page {q.page}</span>
+                      </div>
+                      <p className="text-white mb-4 leading-relaxed text-sm md:text-base">{q.text}</p>
+                      {q.choices && q.choices.length > 0 && q.choices[0] !== '(Fill in the blank - numeric value)' && q.choices[0] !== '(Fill in the blanks)' && q.choices[0] !== '(Drag and drop diagram)' && q.choices[0] !== '(Drag and drop - drug classification and treatment goals)' && q.choices[0] !== '(Drag and drop - drug classification and medication action)' && q.choices[0] !== '(Drag and drop to complete sentence about PCI)' && q.choices[0] !== '(Click the chosen location on diagram)' && (
+                        <div className="space-y-2">
+                          {q.choices.map((choice: string, i: number) => (
+                            <div key={i} className="flex items-start gap-3 text-sm">
+                              <span className="flex-shrink-0 w-6 h-6 rounded bg-gray-800 flex items-center justify-center text-xs font-medium text-gray-400">
+                                {String.fromCharCode(65 + i)}
+                              </span>
+                              <span className="text-gray-300 pt-0.5">{choice}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {q.choices && q.choices.length > 0 && (q.choices[0].includes('Fill in') || q.choices[0].includes('Drag and drop') || q.choices[0].includes('Click the')) && (
+                        <div className="text-xs text-gray-500 italic">{q.choices[0]}</div>
+                      )}
+                      {q.type && (
+                        <div className="text-xs text-purple-400 italic">
+                          Interactive question type: {q.type}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {!showAll && filteredQuestions.length > 15 && (
+              <div className="mt-8 text-center">
+                <button
+                  onClick={() => setShowAll(true)}
+                  className="px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-emerald-500/20"
+                >
+                  Show All {filteredQuestions.length} Questions
+                </button>
+              </div>
+            )}
+
+            {filteredQuestions.length === 0 && questions.length > 0 && (
+              <div className="text-center py-12 text-gray-500">
+                No questions found matching "{searchTerm}"
+              </div>
+            )}
+          </>
         )}
       </div>
 
