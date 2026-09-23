@@ -7,6 +7,7 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
   const [showAll, setShowAll] = useState(false);
   const [filter, setFilter] = useState<'all' | 'free' | 'locked'>('all');
   const [selectedExamId, setSelectedExamId] = useState('rn-hesi-exit-mcphs');
+  const [dropdownAnswers, setDropdownAnswers] = useState<Record<string, Record<number, string[]>>>({});
 
   const selectedExam = allScrapedExams.find(exam => exam.id === selectedExamId) || allScrapedExams[0];
   const questions = selectedExam.questions || [];
@@ -263,7 +264,38 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
                       {q.choices && q.choices.length > 0 && (q.choices[0].includes('Fill in') || q.choices[0].includes('Drag and drop') || q.choices[0].includes('Click the')) && (
                         <div className="text-xs text-gray-500 italic">{q.choices[0]}</div>
                       )}
-                      {q.type && (
+                      {q.type === 'dropdown' && (
+                        <InteractiveDropdown
+                          questionNumber={q.number}
+                          examId={selectedExamId}
+                          text={q.text}
+                          dropdownAnswers={dropdownAnswers}
+                          setDropdownAnswers={setDropdownAnswers}
+                        />
+                      )}
+                      {q.type === 'numeric' && (
+                        <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                          <label className="block text-sm text-purple-400 mb-2">Enter your answer:</label>
+                          <input
+                            type="text"
+                            placeholder="Type your numeric answer..."
+                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                          />
+                        </div>
+                      )}
+                      {q.type === 'ordering' && (
+                        <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                          <p className="text-sm text-purple-400 mb-2">Drag items to reorder:</p>
+                          <div className="space-y-2">
+                            {q.choices?.map((choice: string, i: number) => (
+                              <div key={i} className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white cursor-move">
+                                {String.fromCharCode(65 + i)}) {choice}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {q.type && q.type !== 'dropdown' && q.type !== 'numeric' && q.type !== 'ordering' && (
                         <div className="text-xs text-purple-400 italic">
                           Interactive question type: {q.type}
                         </div>
@@ -317,6 +349,88 @@ export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () 
           </p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+// Interactive Dropdown Component
+function InteractiveDropdown({ 
+  questionNumber, 
+  examId, 
+  text, 
+  dropdownAnswers, 
+  setDropdownAnswers 
+}: {
+  questionNumber: number;
+  examId: string;
+  text: string;
+  dropdownAnswers: Record<string, Record<number, string[]>>;
+  setDropdownAnswers: (answers: Record<string, Record<number, string[]>>) => void;
+}) {
+  // Extract dropdown placeholders from text
+  const dropdownCount = (text.match(/\[dropdown\]/g) || []).length;
+  const currentAnswers = dropdownAnswers[examId]?.[questionNumber] || Array(dropdownCount).fill('');
+
+  // Sample options for dropdown questions (these would normally come from the case study data)
+  const sampleOptions = [
+    'Assess the client',
+    'Notify the healthcare provider',
+    'Document the findings',
+    'Administer medication',
+    'Implement safety measures',
+    'Monitor vital signs',
+    'Provide emotional support',
+    'Perform intervention'
+  ];
+
+  const handleDropdownChange = (dropdownIndex: number, value: string) => {
+    const newAnswers = { ...dropdownAnswers };
+    if (!newAnswers[examId]) {
+      newAnswers[examId] = {};
+    }
+    if (!newAnswers[examId][questionNumber]) {
+      newAnswers[examId][questionNumber] = Array(dropdownCount).fill('');
+    }
+    newAnswers[examId][questionNumber][dropdownIndex] = value;
+    setDropdownAnswers(newAnswers);
+  };
+
+  // Split text by [dropdown] markers
+  const parts = text.split(/\[dropdown\]/);
+
+  return (
+    <div className="mt-3 p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+      <p className="text-sm text-purple-400 mb-3">Select from dropdown:</p>
+      <div className="space-y-3">
+        {parts.map((part, index) => {
+          if (index === parts.length - 1 && !part.trim()) return null;
+          
+          return (
+            <div key={index} className="flex flex-wrap items-center gap-2">
+              {part && <span className="text-white text-sm">{part}</span>}
+              {index < dropdownCount && (
+                <select
+                  value={currentAnswers[index] || ''}
+                  onChange={(e) => handleDropdownChange(index, e.target.value)}
+                  className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-purple-500 min-w-[200px]"
+                >
+                  <option value="">-- Select option --</option>
+                  {sampleOptions.map((option, i) => (
+                    <option key={i} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {currentAnswers.some(a => a) && (
+        <div className="mt-3 p-2 bg-gray-800/50 rounded text-xs text-gray-400">
+          <strong>Your selections:</strong> {currentAnswers.filter(a => a).join(' → ')}
+        </div>
+      )}
     </div>
   );
 }
