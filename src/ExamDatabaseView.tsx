@@ -85,15 +85,31 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
         </div>
       </header>
 
-      {/* Stats Cards */}
+      {/* Massive Scale Banner */}
       <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">🎯 Massive Question Bank Database</h2>
+              <p className="text-gray-400">
+                {stats.totalQuestions.toLocaleString()}+ questions across {stats.totalExams} exam categories
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-4xl font-bold text-emerald-400">{(stats.totalQuestions / 1000).toFixed(0)}K+</div>
+              <div className="text-sm text-gray-400">Total Questions</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
             <div className="text-3xl font-bold text-emerald-400">{stats.totalExams}</div>
-            <div className="text-xs text-gray-400 mt-1">Total Exams</div>
+            <div className="text-xs text-gray-400 mt-1">Exam Categories</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <div className="text-3xl font-bold text-cyan-400">{stats.totalQuestions}</div>
+            <div className="text-3xl font-bold text-cyan-400">{stats.totalQuestions.toLocaleString()}</div>
             <div className="text-xs text-gray-400 mt-1">Total Questions</div>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
@@ -155,6 +171,7 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
             if (categoryExams.length === 0) return null;
             
             const isExpanded = expandedFolders.has(category.id);
+            const totalQuestionsInCategory = categoryExams.reduce((sum, exam) => sum + exam.totalQuestions, 0);
             
             return (
               <div key={category.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
@@ -169,6 +186,9 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
                     <span className="px-2 py-0.5 rounded text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">
                       {categoryExams.length} exams
                     </span>
+                    <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                      {totalQuestionsInCategory.toLocaleString()} questions
+                    </span>
                   </div>
                   <ChevronRight className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                 </button>
@@ -180,6 +200,8 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
                       const subcategoryExams = categoryExams.filter(e => e.subcategory === subcategory.id);
                       if (subcategoryExams.length === 0) return null;
                       
+                      const totalQuestionsInSubcategory = subcategoryExams.reduce((sum, exam) => sum + exam.totalQuestions, 0);
+                      
                       return (
                         <div key={subcategory.id} className="border-b border-gray-800 last:border-b-0">
                           {/* Subcategory Header */}
@@ -187,6 +209,9 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
                             <Folder className="w-4 h-4 text-purple-400" />
                             <h4 className="text-sm font-medium text-gray-300">{subcategory.name}</h4>
                             <span className="text-xs text-gray-500">({subcategoryExams.length})</span>
+                            <span className="text-xs text-emerald-400 font-semibold ml-auto">
+                              {totalQuestionsInSubcategory.toLocaleString()} questions
+                            </span>
                           </div>
                           
                           {/* Exams in this subcategory */}
@@ -200,7 +225,7 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
                                       <h5 className="font-medium text-sm">{exam.title}</h5>
                                     </div>
                                     <div className="flex flex-wrap gap-3 text-xs text-gray-400 ml-6">
-                                      <span>📝 {exam.totalQuestions} questions</span>
+                                      <span className="font-semibold text-emerald-400">📝 {exam.totalQuestions.toLocaleString()} questions</span>
                                       {exam.totalPages && <span>📄 {exam.totalPages} pages</span>}
                                       {exam.freeQuestions !== undefined && <span>🆓 {exam.freeQuestions} free</span>}
                                       {exam.dateScraped && (
@@ -264,7 +289,7 @@ export default function ExamDatabaseView({ onExit }: { onExit?: () => void } = {
                         </div>
                         <h3 className="text-lg font-semibold mb-1">{exam.title}</h3>
                         <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                          <span>📝 {exam.totalQuestions} questions</span>
+                          <span className="font-semibold text-emerald-400">📝 {exam.totalQuestions.toLocaleString()} questions</span>
                           {exam.totalPages && <span>📄 {exam.totalPages} pages</span>}
                           {exam.freeQuestions !== undefined && <span>🆓 {exam.freeQuestions} free</span>}
                           {exam.dateScraped && (
