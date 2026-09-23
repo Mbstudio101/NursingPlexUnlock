@@ -14,6 +14,13 @@ export interface ExamInfo {
   questions: any[];
 }
 
+// Debug: Log what we're loading
+console.log('Loading exams...');
+console.log('HESI questions:', hesiQuestions?.length || 0);
+console.log('ATI Fundamentals questions:', atiFundamentals2026?.questions?.length || 0);
+console.log('ATI Med-Surg questions:', atiMedSurg2026?.questions?.length || 0);
+console.log('ATI Pharmacology questions:', atiPharmacology2026?.questions?.length || 0);
+
 export const allScrapedExams: ExamInfo[] = [
   {
     id: 'rn-hesi-exit-mcphs',
@@ -22,7 +29,7 @@ export const allScrapedExams: ExamInfo[] = [
     subcategory: 'HESI',
     totalQuestions: 127,
     scrapedDate: '2024-01-15',
-    questions: hesiQuestions
+    questions: hesiQuestions || []
   },
   {
     id: 'rn-ati-fundamentals-2026',
@@ -31,7 +38,7 @@ export const allScrapedExams: ExamInfo[] = [
     subcategory: 'ATI',
     totalQuestions: 69,
     scrapedDate: '2024-01-15',
-    questions: atiFundamentals2026.questions
+    questions: atiFundamentals2026?.questions || []
   },
   {
     id: 'rn-ati-med-surg-2026',
@@ -40,7 +47,7 @@ export const allScrapedExams: ExamInfo[] = [
     subcategory: 'ATI',
     totalQuestions: 97,
     scrapedDate: '2024-01-15',
-    questions: atiMedSurg2026.questions
+    questions: atiMedSurg2026?.questions || []
   },
   {
     id: 'rn-ati-pharmacology-2026',
@@ -49,8 +56,11 @@ export const allScrapedExams: ExamInfo[] = [
     subcategory: 'ATI',
     totalQuestions: 70,
     scrapedDate: '2024-01-15',
-    questions: atiPharmacology2026.questions
+    questions: atiPharmacology2026?.questions || []
   }
 ];
+
+console.log('Total exams loaded:', allScrapedExams.length);
+console.log('Exams:', allScrapedExams.map(e => `${e.title}: ${e.questions.length} questions`));
 
 export const totalScrapedQuestions = allScrapedExams.reduce((sum, exam) => sum + exam.totalQuestions, 0);

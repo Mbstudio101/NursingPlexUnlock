@@ -7,14 +7,29 @@ interface ExamSelectorProps {
 }
 
 export const ExamSelector: React.FC<ExamSelectorProps> = ({ onSelectExam, currentExamId }) => {
+  console.log('ExamSelector rendering with exams:', allScrapedExams);
+  
+  if (!allScrapedExams || allScrapedExams.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 text-white">
+        <h2 className="text-3xl font-bold mb-6 text-center text-white">Loading Exams...</h2>
+        <p className="text-center text-gray-400">Please wait while we load the exam data.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 text-white">
       <h2 className="text-3xl font-bold mb-6 text-center text-white">Select an Exam</h2>
+      <p className="text-center text-gray-400 mb-8">Choose from {allScrapedExams.length} available exams</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {allScrapedExams.map((exam) => (
           <button
             key={exam.id}
-            onClick={() => onSelectExam(exam.id)}
+            onClick={() => {
+              console.log('Selected exam:', exam.id);
+              onSelectExam(exam.id);
+            }}
             className={`p-6 rounded-lg border-2 transition-all hover:scale-105 text-left ${
               currentExamId === exam.id
                 ? 'border-purple-500 bg-purple-500/10'
@@ -33,6 +48,11 @@ export const ExamSelector: React.FC<ExamSelectorProps> = ({ onSelectExam, curren
                 <span>{exam.totalQuestions} questions</span>
                 <span>Scraped: {exam.scrapedDate}</span>
               </div>
+              {exam.questions && (
+                <div className="mt-2 text-xs text-green-400">
+                  ✓ {exam.questions.length} questions loaded
+                </div>
+              )}
             </div>
           </button>
         ))}
