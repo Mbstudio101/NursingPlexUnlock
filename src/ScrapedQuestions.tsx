@@ -4,7 +4,7 @@ import { allScrapedExams } from './data/allScrapedQuestions';
 
 export default function ScrapedQuestions({ onExit, onStartQuiz }: { onExit?: () => void; onStartQuiz?: () => void } = {}) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
   const [filter, setFilter] = useState<'all' | 'free' | 'locked'>('all');
   const [selectedExamId, setSelectedExamId] = useState('rn-hesi-exit-mcphs');
   const [dropdownAnswers, setDropdownAnswers] = useState<Record<string, Record<number, string[]>>>({});
