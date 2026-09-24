@@ -75,13 +75,6 @@
     // 6. Show success notification
     showNotification();
 
-    // 7. Send count to background script
-    const questionCount = document.querySelectorAll('ol.review-questions-list > li').length;
-    chrome.runtime.sendMessage({ 
-      action: 'incrementCount', 
-      count: questionCount 
-    });
-
     console.log('[NursingPlex Unlock] Unlock process complete!');
   }
 
