@@ -52,6 +52,30 @@ A comprehensive web application for practicing nursing exams scraped from Nursin
 - **Interactive Diagrams** - Work without requiring images
 - **Responsive Images** - Optimized for all screen sizes
 
+## 🔓 Browser Extension
+
+**New!** Automatically unlock NursingPlex questions with our browser extension!
+
+### Features
+- ✅ Automatic unlocking on NursingPlex pages
+- ✅ Beautiful popup UI with stats
+- ✅ Toggle control (enable/disable)
+- ✅ Works on all exam review pages
+- ✅ No manual script pasting needed
+
+### Quick Install
+1. Open `extension/generate-icons.html` in browser
+2. Click "Download All" to get icons
+3. Go to `chrome://extensions/`
+4. Enable "Developer mode"
+5. Click "Load unpacked"
+6. Select the `extension/` folder
+7. Done! Visit any NursingPlex review page
+
+See [extension/README.md](./extension/README.md) for detailed instructions.
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
