@@ -1,6 +1,28 @@
-# 🎓 Nursing Exam Practice Platform
+# 🎓 Nursing Exam Practice Platform - Complete Package
 
-A comprehensive web application for practicing nursing exams scraped from NursingPlex, featuring interactive question types, exam database management, and quiz functionality.
+> **🎯 START HERE:** Read [UNIFIED_README.md](./UNIFIED_README.md) for the complete overview!
+
+A comprehensive nursing exam practice ecosystem combining:
+- 🌐 **Web Application** - 503 questions from 7 exams with interactive quizzes
+- 🔓 **Browser Extension** - Auto-unlock NursingPlex pages
+- 📚 **Complete Documentation** - Everything you need in one place
+
+## 🚀 Quick Start (3 Minutes)
+
+```bash
+# One-command installation
+./unified-setup.sh    # Mac/Linux
+unified-setup.bat     # Windows
+```
+
+Or install manually:
+```bash
+npm install
+npm run dev
+# Open http://localhost:5173
+```
+
+See [UNIFIED_INSTALLATION.md](./UNIFIED_INSTALLATION.md) for detailed instructions.
 
 ![Nursing Exam Platform](https://img.shields.io/badge/Exams-7-blue)
 ![Questions](https://img.shields.io/badge/Questions-503-green)
