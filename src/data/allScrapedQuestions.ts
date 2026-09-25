@@ -18,6 +18,14 @@ export interface ExamInfo {
 }
 
 // Debug: Log what we're loading
+console.log('Loading exams...');
+console.log('HESI questions:', hesiQuestions?.length || 0);
+console.log('ATI Fundamentals questions:', atiFundamentals2026?.questions?.length || 0);
+console.log('ATI Med-Surg questions:', atiMedSurg2026?.questions?.length || 0);
+console.log('ATI Pharmacology questions:', atiPharmacology2026?.questions?.length || 0);
+console.log('SP26 Advanced Med-Surg questions:', sp26AdvancedMedSurg?.questions?.length || 0);
+console.log('Advanced Med-Surg Health Wellness questions:', advancedMedSurgHealthWellness?.questions?.length || 0);
+console.log('Advanced Med-Surg MCHPS questions:', advancedMedSurgMCHPS?.questions?.length || 0);
 
 export const allScrapedExams: ExamInfo[] = [
   {
@@ -85,5 +93,7 @@ export const allScrapedExams: ExamInfo[] = [
   }
 ];
 
+console.log('Total exams loaded:', allScrapedExams.length);
+console.log('Exams:', allScrapedExams.map(e => `${e.title}: ${e.questions.length} questions`));
 
-export const totalScrapedQuestions = allScrapedExams.reduce((sum, exam) => sum + exam.questions.length, 0);
+export const totalScrapedQuestions = allScrapedExams.reduce((sum, exam) => sum + exam.totalQuestions, 0);

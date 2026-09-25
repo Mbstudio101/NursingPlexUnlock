@@ -1,495 +1,644 @@
-import { useEffect, useState, type ComponentType } from "react";
-import type { InteractiveQuestion } from "./InteractiveComponents";
-import {
-  ArrowLeft,
-  BookOpen,
-  Flag,
-  Pause,
-  Play,
-  List,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { allScrapedExams } from "./data/allScrapedQuestions";
-import {
-  configuration,
-  complete,
-  multiple,
-  selectionLimit,
-  answerLabel,
-} from "./lib/questionFormat";
-import {
-  NumericInput,
-  HighlightText,
-  HighlightFindings,
-  MatrixGrid,
-  DropdownFill,
-  DiagramClick,
-  DragCategories,
-} from "./InteractiveComponents";
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Flag, CheckCircle2, Clock, List, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { allScrapedExams } from './data/allScrapedQuestions';
+import { interactiveQuestions } from './data/interactiveData';
+import { 
+  NumericInput, 
+  HighlightText, 
+  HighlightFindings, 
+  MatrixGrid, 
+  DropdownFill, 
+  DiagramClick, 
+  DragCategories 
+} from './InteractiveComponents';
 
-type Session = {
-  index: number;
-  answers: Record<number, any>;
-  flags: number[];
-  elapsed: number;
-};
-const fresh = (): Session => ({ index: 0, answers: {}, flags: [], elapsed: 0 });
-function load(key: string, count: number): Session {
-  try {
-    const s = JSON.parse(localStorage.getItem(key) || "null");
-    if (
-      s &&
-      Number.isInteger(s.index) &&
-      s.index >= 0 &&
-      s.index < count &&
-      s.answers &&
-      typeof s.answers === "object" &&
-      !Array.isArray(s.answers) &&
-      Array.isArray(s.flags) &&
-      s.flags.every(Number.isInteger) &&
-      Number.isFinite(s.elapsed) &&
-      s.elapsed >= 0
-    )
-      return s;
-  } catch {}
-  return fresh();
-}
-export default function QuizView({
-  onExit,
-  examId = "rn-hesi-exit-mcphs",
-}: {
+type AnswerMap = Record<number, number[]>; // question number -> selected choice indices
+
+interface QuizViewProps {
   onExit?: () => void;
   examId?: string;
-}) {
-  const exam = allScrapedExams.find((e) => e.id === examId)!;
-  const questions = exam?.questions || [];
-  const key = `nursing-study:v1:${examId}`;
-  const [session, setSession] = useState(() => load(key, questions.length));
-  const [paused, setPaused] = useState(false);
-  const [review, setReview] = useState(false);
-  const [palette, setPalette] = useState(false);
-  const [filter, setFilter] = useState("all");
-  const [storageError, setStorageError] = useState(false);
-  const [imageError, setImageError] = useState(false);
+}
+
+export default function QuizView({ onExit, examId = 'rn-hesi-exit-mcphs' }: QuizViewProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState<AnswerMap>({});
+  const [interactiveAnswers, setInteractiveAnswers] = useState<Record<number, any>>({});
+  const [flagged, setFlagged] = useState<Set<number>>(new Set());
+  const [showPalette, setShowPalette] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [startTime] = useState(Date.now());
+  const [elapsed, setElapsed] = useState(0);
+
+  // Get the selected exam
+  const selectedExam = allScrapedExams.find(exam => exam.id === examId) || allScrapedExams[0];
+  const questions = selectedExam.questions;
+  const examTitle = selectedExam.title;
+
+  // Update timer every second
   useEffect(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(session));
-      setStorageError(false);
-    } catch {
-      setStorageError(true);
-    }
-  }, [key, session]);
-  useEffect(() => {
-    if (paused || review) return;
-    let last = Date.now();
-    const timer = setInterval(() => {
-      const now = Date.now();
-      const delta = Math.floor((now - last) / 1000);
-      if (delta) {
-        last += delta * 1000;
-        setSession((s) => ({ ...s, elapsed: s.elapsed + delta }));
-      }
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
-    return () => clearInterval(timer);
-  }, [paused, review]);
-  useEffect(() => {
-    setImageError(false);
-  }, [session.index]);
-  if (!exam || !questions.length)
+    return () => clearInterval(interval);
+  }, [startTime]);
+
+  const currentQuestion = questions[currentIndex];
+  const totalQuestions = questions.length;
+  const flaggedCount = flagged.size;
+
+  const isAnswered = (qNum: number) => {
+    if (answers[qNum] && answers[qNum].length > 0) return true;
+    if (interactiveAnswers[qNum] !== undefined) {
+      const val = interactiveAnswers[qNum];
+      if (typeof val === 'string' && val.trim() !== '') return true;
+      if (Array.isArray(val) && val.length > 0) return true;
+      if (typeof val === 'object' && val !== null && Object.keys(val).length > 0) return true;
+      if (typeof val === 'number') return true;
+    }
+    return false;
+  };
+
+  const answeredCount = questions.filter(q => isAnswered(q.number)).length;
+
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleSelectAnswer = (choiceIndex: number) => {
+    const qNum = currentQuestion.number;
+    const isSATA = currentQuestion.text.toLowerCase().includes('select all that apply') || 
+                   currentQuestion.text.toLowerCase().includes('(sata)');
+    
+    if (isSATA) {
+      // Toggle for multi-select
+      const current = answers[qNum] || [];
+      if (current.includes(choiceIndex)) {
+        setAnswers({ ...answers, [qNum]: current.filter(i => i !== choiceIndex) });
+      } else {
+        setAnswers({ ...answers, [qNum]: [...current, choiceIndex] });
+      }
+    } else {
+      // Single select
+      setAnswers({ ...answers, [qNum]: [choiceIndex] });
+    }
+  };
+
+  const toggleFlag = () => {
+    const newFlagged = new Set(flagged);
+    if (newFlagged.has(currentQuestion.number)) {
+      newFlagged.delete(currentQuestion.number);
+    } else {
+      newFlagged.add(currentQuestion.number);
+    }
+    setFlagged(newFlagged);
+  };
+
+  const goNext = () => {
+    if (currentIndex < totalQuestions - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const goPrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const resetQuiz = () => {
+    setAnswers({});
+    setInteractiveAnswers({});
+    setFlagged(new Set());
+    setCurrentIndex(0);
+    setShowReview(false);
+  };
+
+  const isFlagged = (qNum: number) => flagged.has(qNum);
+  const isSATA = currentQuestion.text.toLowerCase().includes('select all that apply') || 
+                 currentQuestion.text.toLowerCase().includes('(sata)');
+
+  // Filterable palette
+  const [paletteFilter, setPaletteFilter] = useState<'all' | 'answered' | 'unanswered' | 'flagged'>('all');
+  
+  const filteredPalette = useMemo(() => {
+    return questions.filter(q => {
+      if (paletteFilter === 'answered') return isAnswered(q.number);
+      if (paletteFilter === 'unanswered') return !isAnswered(q.number);
+      if (paletteFilter === 'flagged') return isFlagged(q.number);
+      return true;
+    });
+  }, [paletteFilter, answers, flagged]);
+
+  if (showReview) {
     return (
-      <main className="library-main">
-        <h1>Exam unavailable</h1>
-        <button onClick={onExit}>Back to exams</button>
-      </main>
+      <ReviewView 
+        answers={answers} 
+        flagged={flagged} 
+        onBack={() => setShowReview(false)} 
+        onReset={resetQuiz}
+        onJumpTo={(idx) => { setShowReview(false); setCurrentIndex(idx); }}
+        questions={questions}
+        isAnswered={isAnswered}
+      />
     );
-  const q = questions[session.index];
-  const config = configuration(examId, q);
-  const value = session.answers[q.number];
-  const components = {
-    numeric: NumericInput,
-    "highlight-text": HighlightText,
-    "highlight-findings": HighlightFindings,
-    matrix: MatrixGrid,
-    dropdown: DropdownFill,
-    "diagram-click": DiagramClick,
-    "drag-categories": DragCategories,
-  };
-  const Control = config
-    ? (components[config.type] as ComponentType<{
-        question: InteractiveQuestion;
-        value: any;
-        onChange: (value: any) => void;
-      }>)
-    : null;
-  const defaultValue =
-    config?.type === "numeric"
-      ? ""
-      : config?.type === "diagram-click"
-        ? null
-        : config?.type.startsWith("highlight")
-          ? []
-          : {};
-  const choices: string[] = q.choices || [];
-  const available = choices.length > 0 && !choices[0].startsWith("(");
-  const isMulti = multiple(q),
-    limit = selectionLimit(q);
-  const answered = (question: typeof q) =>
-    complete(
-      question,
-      configuration(examId, question),
-      session.answers[question.number],
-    );
-  const count = questions.filter(answered).length;
-  const update = (v: any) =>
-    setSession((s) => ({ ...s, answers: { ...s.answers, [q.number]: v } }));
-  const jump = (index: number) => {
-    setSession((s) => ({ ...s, index }));
-    setReview(false);
-    setPalette(false);
-  };
-  function choose(i: number) {
-    const current: number[] = Array.isArray(value) ? value : [];
-    if (q.type === "ordering")
-      return update(
-        current.includes(i) ? current.filter((x) => x !== i) : [...current, i],
-      );
-    if (!isMulti) return update([i]);
-    if (current.includes(i)) update(current.filter((x) => x !== i));
-    else if (!limit || current.length < limit) update([...current, i]);
   }
-  const time = [
-    Math.floor(session.elapsed / 3600),
-    Math.floor(session.elapsed / 60) % 60,
-    session.elapsed % 60,
-  ]
-    .map((x) => String(x).padStart(2, "0"))
-    .join(":");
-  const instruction = config
-    ? {
-        numeric: "Enter your numeric answer",
-        matrix: "Select one answer in every row",
-        dropdown: "Complete every blank",
-        "highlight-text": "Highlight the relevant findings",
-        "highlight-findings": "Select the relevant findings",
-        "diagram-click": "Select a location",
-        "drag-categories": "Assign items to the categories",
-      }[config.type]
-    : q.type === "ordering"
-      ? "Select steps in order. Select a step again to remove it."
-      : isMulti
-        ? limit
-          ? `Select ${limit} answers`
-          : "Select all that apply"
-        : "Select one answer";
+
   return (
-    <div className="study-shell">
-      <header className="study-header">
-        <button className="back-button" onClick={onExit}>
-          <ArrowLeft size={18} />
-          <span>Exams</span>
-        </button>
-        <div className="exam-heading">
-          <strong>{exam.title}</strong>
-          <span>
-            {storageError
-              ? "Unable to save in this browser—keep this tab open."
-              : "Progress saved on this device"}
-          </span>
-        </div>
-        <div className="timer">
-          <span>{time}</span>
-          <button
-            aria-label={paused ? "Resume timer" : "Pause timer"}
-            onClick={() => setPaused(!paused)}
-            disabled={review}
-          >
-            {paused ? <Play size={18} /> : <Pause size={18} />}
-          </button>
-        </div>
-        <button className="primary" onClick={() => setReview(!review)}>
-          {review ? "Continue" : "Review"}
-        </button>
-      </header>
-      <div className="progress-track">
-        <div style={{ width: `${(count / questions.length) * 100}%` }} />
-      </div>
-      {review ? (
-        <main className="review-main">
-          <div className="eyebrow">YOUR SESSION</div>
-          <h1>Review your work.</h1>
-          <p className="lede">
-            {count} of {questions.length} questions completed ·{" "}
-            {session.flags.length} flagged
-          </p>
-          <p className="notice">
-            Answer keys are not included. This is a completion summary, not a
-            graded score. Incomplete questions and missing exhibits need further
-            review.
-          </p>
-          <div className="review-actions">
-            <button className="secondary" onClick={() => setReview(false)}>
-              Continue practice
-            </button>
-            <button
-              className="secondary"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "Clear all responses, flags and time for this exam?",
-                  )
-                ) {
-                  setSession(fresh());
-                  setReview(false);
-                  setPaused(false);
-                }
-              }}
+    <div className="min-h-screen bg-gray-950 text-white">
+      {/* Top Bar */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-gray-950/90 border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => onExit ? onExit() : window.history.back()}
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
             >
-              Start over
+              <ArrowLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">Exit Quiz</span>
+            </button>
+            <div className="hidden sm:block h-6 w-px bg-gray-800" />
+            <div className="hidden sm:block">
+              <h1 className="text-sm font-bold">{examTitle}</h1>
+              <p className="text-xs text-gray-500">Practice Quiz Mode</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Timer */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800/50">
+              <Clock className="w-4 h-4 text-gray-400" />
+              <span className="text-sm font-mono text-gray-300">{formatTime(elapsed)}</span>
+            </div>
+            
+            {/* Progress */}
+            <div className="hidden md:flex items-center gap-2">
+              <span className="text-sm text-gray-400">
+                <span className="text-emerald-400 font-semibold">{answeredCount}</span>/{totalQuestions} answered
+              </span>
+              {flaggedCount > 0 && (
+                <span className="text-sm text-amber-400 flex items-center gap-1">
+                  <Flag className="w-3 h-3" />{flaggedCount}
+                </span>
+              )}
+            </div>
+            
+            {/* Palette toggle */}
+            <button
+              onClick={() => setShowPalette(!showPalette)}
+              className={`p-2 rounded-lg transition-colors ${showPalette ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+            >
+              <List className="w-5 h-5" />
+            </button>
+            
+            {/* Submit */}
+            <button
+              onClick={() => setShowReview(true)}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold hover:scale-105 transition-transform"
+            >
+              Review
             </button>
           </div>
-          <div className="review-list">
-            {questions.map((question, index) => (
-              <article key={question.number}>
-                <div className="review-item-heading">
-                  <span>
-                    QUESTION {index + 1}{" "}
-                    {session.flags.includes(question.number) ? "• FLAGGED" : ""}
-                  </span>
-                  <button onClick={() => jump(index)}>
-                    Revisit <ChevronRight size={16} />
-                  </button>
-                </div>
-                <h3>{question.text}</h3>
-                <p className="answer-summary">
-                  {answerLabel(
-                    question,
-                    configuration(examId, question),
-                    session.answers[question.number],
-                  )}
-                </p>
-                <span className="status-label">
-                  {answered(question) ? "Completed" : "Incomplete"}
-                </span>
-              </article>
-            ))}
-          </div>
-        </main>
-      ) : (
-        <main className="exam-layout">
-          <aside className={`navigator ${palette ? "is-open" : ""}`}>
-            <div className="navigator-title">
-              <BookOpen size={19} />
-              <h2>Question navigator</h2>
-            </div>
-            <p>
-              {count} completed · {questions.length - count} remaining
-            </p>
-            <label className="filter-label">
-              Show questions
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="all">All questions</option>
-                <option value="unanswered">Incomplete</option>
-                <option value="answered">Completed</option>
-                <option value="flagged">Flagged</option>
-              </select>
-            </label>
-            <div className="question-grid">
-              {questions
-                .map((question, index) => ({ question, index }))
-                .filter(
-                  ({ question }) =>
-                    filter === "all" ||
-                    (filter === "flagged" &&
-                      session.flags.includes(question.number)) ||
-                    (filter === "answered" && answered(question)) ||
-                    (filter === "unanswered" && !answered(question)),
-                )
-                .map(({ question, index }) => (
+        </div>
+        
+        {/* Progress bar */}
+        <div className="h-1 bg-gray-800">
+          <div 
+            className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-300"
+            style={{ width: `${(answeredCount / totalQuestions) * 100}%` }}
+          />
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
+        {/* Question Palette Sidebar */}
+        {showPalette && (
+          <div className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-24 bg-gray-900 border border-gray-800 rounded-xl p-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+              <h3 className="font-semibold mb-3 text-sm">Question Navigator</h3>
+              
+              {/* Filter buttons */}
+              <div className="flex flex-wrap gap-1 mb-3">
+                {(['all', 'answered', 'unanswered', 'flagged'] as const).map(f => (
                   <button
-                    key={question.number}
-                    aria-label={`Question ${index + 1}${session.flags.includes(question.number) ? ", flagged" : ""}`}
-                    aria-current={session.index === index ? "step" : undefined}
-                    className={`${session.index === index ? "current" : ""} ${answered(question) ? "answered" : ""} ${session.flags.includes(question.number) ? "flagged" : ""}`}
-                    onClick={() => jump(index)}
+                    key={f}
+                    onClick={() => setPaletteFilter(f)}
+                    className={`px-2 py-1 rounded text-xs transition-colors ${
+                      paletteFilter === f 
+                        ? 'bg-emerald-500/20 text-emerald-400' 
+                        : 'bg-gray-800 text-gray-400 hover:text-white'
+                    }`}
                   >
-                    {index + 1}
+                    {f.charAt(0).toUpperCase() + f.slice(1)}
                   </button>
                 ))}
-            </div>
-            <p className="navigator-legend">
-              Teal: completed
-              <br />
-              Amber outline: flagged
-            </p>
-          </aside>
-          <section className="question-area">
-            <div className="question-toolbar">
-              <span className="eyebrow">
-                QUESTION {session.index + 1} / {questions.length}
-              </span>
-              <div>
-                <button
-                  className="mobile-nav"
-                  onClick={() => setPalette(!palette)}
-                  aria-expanded={palette}
-                >
-                  <List size={18} />
-                  Navigator
-                </button>
-                <button
-                  aria-pressed={session.flags.includes(q.number)}
-                  onClick={() =>
-                    setSession((s) => ({
-                      ...s,
-                      flags: s.flags.includes(q.number)
-                        ? s.flags.filter((x) => x !== q.number)
-                        : [...s.flags, q.number],
-                    }))
-                  }
-                >
-                  <Flag size={17} />
-                  {session.flags.includes(q.number)
-                    ? "Flagged"
-                    : "Flag for review"}
-                </button>
               </div>
-            </div>
-            {paused ? (
-              <div className="question-card pause-card">
-                <Pause size={34} />
-                <h2>Take a moment.</h2>
-                <p>Your answers are saved. Resume when you’re ready.</p>
-                <button className="primary" onClick={() => setPaused(false)}>
-                  Resume practice
-                </button>
+              
+              {/* Question grid */}
+              <div className="grid grid-cols-8 gap-1">
+                {filteredPalette.map(q => {
+                  const answered = isAnswered(q.number);
+                  const isFlag = isFlagged(q.number);
+                  const isCurrent = q.number === currentQuestion.number;
+                  
+                  return (
+                    <button
+                      key={q.number}
+                      onClick={() => setCurrentIndex(questions.findIndex(x => x.number === q.number))}
+                      className={`w-8 h-8 rounded text-xs font-medium transition-all ${
+                        isCurrent 
+                          ? 'bg-emerald-500 text-white ring-2 ring-emerald-400 ring-offset-1 ring-offset-gray-900' 
+                          : answered 
+                            ? isFlag 
+                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : isFlag
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              : 'bg-gray-800 text-gray-500 border border-gray-700 hover:border-gray-600'
+                      }`}
+                    >
+                      {q.number}
+                    </button>
+                  );
+                })}
               </div>
-            ) : (
-              <div className="question-card">
-                <div className="question-type">
-                  {q.isCaseStudy ? "CASE STUDY · " : ""}
-                  {instruction}
+              
+              {/* Legend */}
+              <div className="mt-4 space-y-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-emerald-500/20 border border-emerald-500/30" />
+                  <span>Answered</span>
                 </div>
-                <h1 className="question-stem">{q.text}</h1>
-                {q.note && <p className="notice">{q.note}</p>}
-                {q.image &&
-                  (imageError ? (
-                    <p className="notice">
-                      The question image could not be loaded. Flag this question
-                      for review.
-                    </p>
-                  ) : (
-                    <img
-                      className="question-image"
-                      src={q.image}
-                      alt={`Exhibit for question ${session.index + 1}`}
-                      onError={() => setImageError(true)}
-                    />
-                  ))}
-                {Control && config ? (
-                  <Control
-                    key={q.number}
-                    question={config}
-                    value={value ?? (defaultValue as any)}
-                    onChange={update}
-                  />
-                ) : available ? (
-                  <div
-                    className="choices"
-                    role="group"
-                    aria-label={instruction}
-                  >
-                    {choices.map((choice, i) => {
-                      const selected =
-                        Array.isArray(value) && value.includes(i);
-                      return (
-                        <button
-                          key={i}
-                          className={`choice ${selected ? "selected" : ""}`}
-                          aria-pressed={selected}
-                          onClick={() => choose(i)}
-                        >
-                          <span
-                            className={`choice-letter ${isMulti ? "square" : ""}`}
-                          >
-                            {q.type === "ordering" && selected
-                              ? value.indexOf(i) + 1
-                              : String.fromCharCode(65 + i)}
-                          </span>
-                          <span>{choice.replace(/^[A-H][.)]\s+/, "")}</span>
-                        </button>
-                      );
-                    })}
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-amber-500/20 border border-amber-500/30" />
+                  <span>Flagged</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-gray-800 border border-gray-700" />
+                  <span>Unanswered</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Question Area */}
+        <div className="flex-1 min-w-0">
+          {/* Question Card */}
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+            {/* Question Header */}
+            <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 font-bold">
+                  {currentQuestion.number}
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Question {currentIndex + 1} of {totalQuestions}</span>
+                    <span className="text-xs text-gray-600">•</span>
+                    <span className="text-xs text-gray-500">Page {currentQuestion.page}</span>
                   </div>
-                ) : (
-                  <p className="notice">
-                    This question is missing its answer options or exhibit. Flag
-                    it for review; it cannot be completed reliably with the
-                    current data.
-                  </p>
-                )}
-                <div className="response-footer">
-                  <span>
-                    {answered(q)
-                      ? "Response completed"
-                      : value != null
-                        ? "Response incomplete"
-                        : "No response yet"}
-                  </span>
-                  <button
-                    disabled={value == null}
-                    onClick={() => {
-                      setSession((s) => {
-                        const answers = { ...s.answers };
-                        delete answers[q.number];
-                        return { ...s, answers };
-                      });
-                    }}
-                  >
-                    Clear response
-                  </button>
+                  {currentQuestion.isCaseStudy && (
+                    <span className="text-xs text-orange-400">Case Study</span>
+                  )}
                 </div>
               </div>
-            )}
-            <nav
-              className="question-navigation"
-              aria-label="Question navigation"
-            >
               <button
-                className="secondary"
-                disabled={session.index === 0}
-                onClick={() => jump(session.index - 1)}
+                onClick={toggleFlag}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                  isFlagged(currentQuestion.number)
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    : 'bg-gray-800 text-gray-400 hover:text-white border border-gray-700'
+                }`}
               >
-                <ChevronLeft size={18} />
+                <Flag className="w-4 h-4" />
+                <span className="hidden sm:inline">{isFlagged(currentQuestion.number) ? 'Flagged' : 'Flag'}</span>
+              </button>
+            </div>
+
+            {/* Question Body */}
+            <div className="p-6">
+              {currentQuestion.isFree && (
+                <div className="mb-4 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>This is a free question — correct answer is highlighted in cyan on NursingPlex</span>
+                </div>
+              )}
+              
+              {isSATA && (
+                <div className="mb-4 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs flex items-center gap-2">
+                  <span>Select multiple answers (SATA)</span>
+                </div>
+              )}
+              
+              <p className="text-white text-base md:text-lg leading-relaxed mb-6">
+                {currentQuestion.text}
+              </p>
+
+              {/* Interactive question types */}
+              {interactiveQuestions[currentQuestion.number] ? (
+                <div className="space-y-4">
+                  <div className="px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs flex items-center gap-2">
+                    <span>🎯 Interactive Question — {
+                      interactiveQuestions[currentQuestion.number].type === 'numeric' ? 'Enter a numeric value' :
+                      interactiveQuestions[currentQuestion.number].type === 'highlight-text' ? 'Click text to highlight' :
+                      interactiveQuestions[currentQuestion.number].type === 'highlight-findings' ? 'Click findings to highlight' :
+                      interactiveQuestions[currentQuestion.number].type === 'matrix' ? 'Match items to categories' :
+                      interactiveQuestions[currentQuestion.number].type === 'dropdown' ? 'Select from dropdowns' :
+                      interactiveQuestions[currentQuestion.number].type === 'diagram-click' ? 'Click a location on the diagram' :
+                      'Drag items into categories'
+                    }</span>
+                  </div>
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'numeric' && (
+                    <NumericInput
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || ''}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'highlight-text' && (
+                    <HighlightText
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || []}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'highlight-findings' && (
+                    <HighlightFindings
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || []}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'matrix' && (
+                    <MatrixGrid
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || {}}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'dropdown' && (
+                    <DropdownFill
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || {}}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'diagram-click' && (
+                    <DiagramClick
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] ?? null}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                  
+                  {interactiveQuestions[currentQuestion.number].type === 'drag-categories' && (
+                    <DragCategories
+                      question={interactiveQuestions[currentQuestion.number]}
+                      value={interactiveAnswers[currentQuestion.number] || {}}
+                      onChange={(val) => setInteractiveAnswers({ ...interactiveAnswers, [currentQuestion.number]: val })}
+                    />
+                  )}
+                </div>
+              ) : currentQuestion.choices.length > 0 && !currentQuestion.choices[0].startsWith('(') ? (
+                /* Standard multiple choice */
+                <div className="space-y-3">
+                  {currentQuestion.choices.map((choice: string, i: number) => {
+                    const isSelected = (answers[currentQuestion.number] || []).includes(i);
+                    
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleSelectAnswer(i)}
+                        className={`w-full text-left p-4 rounded-xl border transition-all flex items-start gap-3 ${
+                          isSelected
+                            ? 'bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30'
+                            : 'bg-gray-800/50 border-gray-700 hover:border-gray-600 hover:bg-gray-800'
+                        }`}
+                      >
+                        <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                          isSelected 
+                            ? 'bg-emerald-500 text-white' 
+                            : 'bg-gray-700 text-gray-400'
+                        }`}>
+                          {String.fromCharCode(65 + i)}
+                        </div>
+                        <span className={`pt-0.5 ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                          {choice}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* Placeholder for questions without interactive data yet */
+                <div className="p-4 rounded-xl bg-gray-800/50 border border-gray-700 text-sm text-gray-400">
+                  <p className="mb-1">⚠️ This interactive question type hasn't been fully built yet.</p>
+                  <p className="text-xs text-gray-500">On NursingPlex, you would interact with a diagram, enter a numeric value, or drag items into categories.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Navigation */}
+            <div className="px-6 py-4 border-t border-gray-800 flex items-center justify-between">
+              <button
+                onClick={goPrev}
+                disabled={currentIndex === 0}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentIndex === 0
+                    ? 'text-gray-600 cursor-not-allowed'
+                    : 'text-gray-300 hover:bg-gray-800'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
                 Previous
               </button>
-              <span>
-                {session.index + 1} of {questions.length}
+              
+              <span className="text-sm text-gray-500">
+                {currentIndex + 1} / {totalQuestions}
               </span>
+              
               <button
-                className="primary"
-                onClick={() =>
-                  session.index === questions.length - 1
-                    ? setReview(true)
-                    : jump(session.index + 1)
-                }
+                onClick={goNext}
+                disabled={currentIndex === totalQuestions - 1}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentIndex === totalQuestions - 1
+                    ? 'text-gray-600 cursor-not-allowed'
+                    : 'text-gray-300 hover:bg-gray-800'
+                }`}
               >
-                {session.index === questions.length - 1
-                  ? "Review session"
-                  : "Next question"}
-                <ChevronRight size={18} />
+                Next
+                <ChevronRight className="w-4 h-4" />
               </button>
-            </nav>
-            <p className="workspace-note">
-              Choose your response before moving on, or flag a question to
-              return to it.
-            </p>
-          </section>
-        </main>
-      )}
+            </div>
+          </div>
+
+          {/* Quick jump bar (mobile) */}
+          <div className="lg:hidden mt-4 bg-gray-900 border border-gray-800 rounded-xl p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-500">Jump to question:</span>
+              <span className="text-xs text-gray-500">
+                {answeredCount} answered • {flaggedCount} flagged
+              </span>
+            </div>
+            <div className="flex gap-1 overflow-x-auto pb-1">
+              {questions.map(q => {
+                const answered = isAnswered(q.number);
+                const isFlag = isFlagged(q.number);
+                const isCurrent = q.number === currentQuestion.number;
+                
+                return (
+                  <button
+                    key={q.number}
+                    onClick={() => setCurrentIndex(questions.findIndex(x => x.number === q.number))}
+                    className={`flex-shrink-0 w-7 h-7 rounded text-[10px] font-medium transition-all ${
+                      isCurrent 
+                        ? 'bg-emerald-500 text-white' 
+                        : answered 
+                          ? isFlag 
+                            ? 'bg-amber-500/30 text-amber-400' 
+                            : 'bg-emerald-500/20 text-emerald-400'
+                          : isFlag
+                            ? 'bg-amber-500/10 text-amber-400'
+                            : 'bg-gray-800 text-gray-500'
+                    }`}
+                  >
+                    {q.number}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
+}
+
+// Review View Component
+function ReviewView({ answers, flagged, onBack, onReset, onJumpTo, questions, isAnswered }: {
+  answers: AnswerMap;
+  flagged: Set<number>;
+  onBack: () => void;
+  onReset: () => void;
+  onJumpTo: (index: number) => void;
+  questions: any[];
+  isAnswered: (qNum: number) => boolean;
+}) {
+  const answeredCount = Object.keys(answers).length;
+  const flaggedCount = flagged.size;
+  const unanswered = questions.length - answeredCount;
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-gray-950/90 border-b border-gray-800">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white">
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Quiz</span>
+          </button>
+          <button
+            onClick={onReset}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 text-sm"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset Quiz
+          </button>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6">Quiz Summary</h2>
+        
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+            <div className="text-3xl font-bold text-white">{questions.length}</div>
+            <div className="text-xs text-gray-400 mt-1">Total Questions</div>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+            <div className="text-3xl font-bold text-emerald-400">{answeredCount}</div>
+            <div className="text-xs text-gray-400 mt-1">Answered</div>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+            <div className="text-3xl font-bold text-amber-400">{flaggedCount}</div>
+            <div className="text-xs text-gray-400 mt-1">Flagged</div>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+            <div className="text-3xl font-bold text-red-400">{unanswered}</div>
+            <div className="text-xs text-gray-400 mt-1">Unanswered</div>
+          </div>
+        </div>
+
+        {/* Note about answers */}
+        <div className="mb-6 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 text-sm text-gray-400">
+          <strong className="text-amber-400">Note:</strong> NursingPlex only provides correct answer highlighting for the first 10 free questions. 
+          For questions 11-127, the correct answers are not sent to your browser (server-side gated), so we cannot auto-grade them.
+          Use this as a self-study tool to review your reasoning.
+        </div>
+
+        {/* Question list */}
+        <div className="space-y-2">
+          {questions.map((q: any, idx: number) => {
+            const answered = isAnswered(q.number);
+            const isFlag = flagged.has(q.number);
+            const selectedChoices = answers[q.number] || [];
+
+            return (
+              <div key={q.number} className={`bg-gray-900 border rounded-xl p-4 ${
+                answered ? 'border-emerald-500/20' : isFlag ? 'border-amber-500/20' : 'border-gray-800'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <button
+                    onClick={() => onJumpTo(idx)}
+                    className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-colors ${
+                      answered ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-800 text-gray-500'
+                    } hover:scale-110`}
+                  >
+                    {q.number}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-300 line-clamp-2 mb-2">{q.text}</p>
+                    {answered && (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedChoices.map(ci => (
+                          <span key={ci} className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-xs">
+                            {String.fromCharCode(65 + ci)}) {q.choices[ci]?.substring(0, 40)}{q.choices[ci]?.length > 40 ? '...' : ''}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {!answered && (
+                      <span className="text-xs text-gray-500 italic">Not answered</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {isFlag && <Flag className="w-4 h-4 text-amber-400" />}
+                    <button
+                      onClick={() => onJumpTo(idx)}
+                      className="text-xs text-emerald-400 hover:underline"
+                    >
+                      Review →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function isAnswered(qNum: number, answers: AnswerMap): boolean {
+  return answers[qNum] && answers[qNum].length > 0;
 }
