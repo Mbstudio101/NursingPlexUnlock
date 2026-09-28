@@ -9,6 +9,7 @@ import { advancedMedSurgMCHPS } from './advanced-med-surg-mchps';
 import { atiDosageCalculation } from './ati-dosage-calculation';
 import { atiDosageCalculation2 } from './ati-dosage-calculation-v2';
 import { atiDosageCalculationMaternalNewborn } from './ati-dosage-calculation-maternal-newborn';
+import { nur404wObstetricsMaternity } from './nur404w-obstetrics-maternity';
 
 export interface ExamInfo {
   id: string;
@@ -32,6 +33,7 @@ console.log('Advanced Med-Surg MCHPS questions:', advancedMedSurgMCHPS?.question
 console.log('ATI Dosage Calculation questions:', atiDosageCalculation?.questions?.length || 0);
 console.log('ATI Dosage Calculation V2 questions:', atiDosageCalculation2?.questions?.length || 0);
 console.log('ATI Dosage Calculation Maternal Newborn questions:', atiDosageCalculationMaternalNewborn?.questions?.length || 0);
+console.log('NUR404W Obstetrics Maternity questions:', nur404wObstetricsMaternity?.questions?.length || 0);
 
 export const allScrapedExams: ExamInfo[] = [
   {
@@ -123,6 +125,15 @@ export const allScrapedExams: ExamInfo[] = [
     totalQuestions: 35,
     scrapedDate: '2024-01-15',
     questions: atiDosageCalculationMaternalNewborn?.questions || []
+  },
+  {
+    id: 'rn-nur404w-obstetrics-maternity-20240115',
+    title: 'NUR404W MCPHS Obstetrics Maternity Proctored Exam (2024-01-15)',
+    category: 'RN',
+    subcategory: 'Regular',
+    totalQuestions: 54,
+    scrapedDate: '2024-01-15',
+    questions: nur404wObstetricsMaternity?.questions || []
   }
 ];
 
