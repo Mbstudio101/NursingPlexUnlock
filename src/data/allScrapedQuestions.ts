@@ -7,6 +7,7 @@ import { sp26AdvancedMedSurg } from './sp26-advanced-med-surg';
 import { advancedMedSurgHealthWellness } from './advanced-med-surg-health-wellness';
 import { advancedMedSurgMCHPS } from './advanced-med-surg-mchps';
 import { atiDosageCalculation } from './ati-dosage-calculation';
+import { atiDosageCalculation2 } from './ati-dosage-calculation-v2';
 
 export interface ExamInfo {
   id: string;
@@ -28,6 +29,7 @@ console.log('SP26 Advanced Med-Surg questions:', sp26AdvancedMedSurg?.questions?
 console.log('Advanced Med-Surg Health Wellness questions:', advancedMedSurgHealthWellness?.questions?.length || 0);
 console.log('Advanced Med-Surg MCHPS questions:', advancedMedSurgMCHPS?.questions?.length || 0);
 console.log('ATI Dosage Calculation questions:', atiDosageCalculation?.questions?.length || 0);
+console.log('ATI Dosage Calculation V2 questions:', atiDosageCalculation2?.questions?.length || 0);
 
 export const allScrapedExams: ExamInfo[] = [
   {
@@ -101,6 +103,15 @@ export const allScrapedExams: ExamInfo[] = [
     totalQuestions: 35,
     scrapedDate: '2024-01-15',
     questions: atiDosageCalculation?.questions || []
+  },
+  {
+    id: 'rn-ati-dosage-calculation-20240115-v2',
+    title: 'ATI Dosage Calculation RN Fundamentals Assessment 3.2 (2024-01-15 V2)',
+    category: 'RN',
+    subcategory: 'ATI',
+    totalQuestions: 35,
+    scrapedDate: '2024-01-15',
+    questions: atiDosageCalculation2?.questions || []
   }
 ];
 
