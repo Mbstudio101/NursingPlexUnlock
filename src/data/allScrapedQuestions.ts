@@ -94,8 +94,8 @@ export const allScrapedExams: ExamInfo[] = [
     questions: advancedMedSurgMCHPS?.questions || []
   },
   {
-    id: 'rn-ati-dosage-calculation',
-    title: 'ATI Dosage Calculation RN Fundamentals Proctored Assessment 3.2',
+    id: 'rn-ati-dosage-calculation-20240115',
+    title: 'ATI Dosage Calculation RN Fundamentals Proctored Assessment 3.2 (2024-01-15)',
     category: 'RN',
     subcategory: 'ATI',
     totalQuestions: 35,

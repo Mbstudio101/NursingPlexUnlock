@@ -2,8 +2,8 @@
 // Source: https://nursingplex.com/review/ati-dosage-calculation-rn-fundamentals-proctored-assessment-32-1733390219
 
 export const atiDosageCalculation = {
-  examId: 'rn-ati-dosage-calculation',
-  title: 'ATI Dosage Calculation RN Fundamentals Proctored Assessment 3.2',
+  examId: 'rn-ati-dosage-calculation-20240115',
+  title: 'ATI Dosage Calculation RN Fundamentals Proctored Assessment 3.2 (2024-01-15)',
   totalQuestions: 35,
   scrapedDate: '2024-01-15',
   questions: [
