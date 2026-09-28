@@ -8,6 +8,7 @@ import { advancedMedSurgHealthWellness } from './advanced-med-surg-health-wellne
 import { advancedMedSurgMCHPS } from './advanced-med-surg-mchps';
 import { atiDosageCalculation } from './ati-dosage-calculation';
 import { atiDosageCalculation2 } from './ati-dosage-calculation-v2';
+import { atiDosageCalculationMaternalNewborn } from './ati-dosage-calculation-maternal-newborn';
 
 export interface ExamInfo {
   id: string;
@@ -30,6 +31,7 @@ console.log('Advanced Med-Surg Health Wellness questions:', advancedMedSurgHealt
 console.log('Advanced Med-Surg MCHPS questions:', advancedMedSurgMCHPS?.questions?.length || 0);
 console.log('ATI Dosage Calculation questions:', atiDosageCalculation?.questions?.length || 0);
 console.log('ATI Dosage Calculation V2 questions:', atiDosageCalculation2?.questions?.length || 0);
+console.log('ATI Dosage Calculation Maternal Newborn questions:', atiDosageCalculationMaternalNewborn?.questions?.length || 0);
 
 export const allScrapedExams: ExamInfo[] = [
   {
@@ -112,6 +114,15 @@ export const allScrapedExams: ExamInfo[] = [
     totalQuestions: 35,
     scrapedDate: '2024-01-15',
     questions: atiDosageCalculation2?.questions || []
+  },
+  {
+    id: 'rn-ati-dosage-calculation-maternal-newborn-20240115',
+    title: 'ATI RN Dosage Calculation Maternal Newborn Proctored Assessment 3.2 (2024-01-15)',
+    category: 'RN',
+    subcategory: 'ATI',
+    totalQuestions: 35,
+    scrapedDate: '2024-01-15',
+    questions: atiDosageCalculationMaternalNewborn?.questions || []
   }
 ];
 
