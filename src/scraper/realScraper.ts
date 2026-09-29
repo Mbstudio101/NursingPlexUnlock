@@ -20,10 +20,12 @@ export interface ScrapedExam {
   subcategory: string;
 }
 
-// CORS proxy services
+// CORS proxy services - Updated with working alternatives
 const CORS_PROXIES = [
-  'https://api.allorigins.win/raw?url=',
-  'https://corsproxy.io/?',
+  'https://api.allorigins.win/get?url=',
+  'https://corsproxy.org/?',
+  'https://thingproxy.freeboard.io/fetch/',
+  'https://cors-anywhere.herokuapp.com/',
   'https://api.codetabs.com/v1/proxy?quest=',
 ];
 
@@ -50,7 +52,18 @@ export async function fetchPageWithProxy(url: string): Promise<string> {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const html = await response.text();
+      let html = await response.text();
+      
+      // Handle different proxy response formats
+      // allorigins.win/get returns JSON with contents field
+      if (proxy.includes('allorigins.win/get')) {
+        try {
+          const json = JSON.parse(html);
+          html = json.contents || html;
+        } catch (e) {
+          // If not JSON, use as-is
+        }
+      }
       
       if (html && html.length > 1000) {
         currentProxyIndex = proxyIndex; // Remember working proxy
