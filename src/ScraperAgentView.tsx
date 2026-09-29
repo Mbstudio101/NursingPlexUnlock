@@ -23,6 +23,9 @@ export default function ScraperAgentView() {
   const [customTitle, setCustomTitle] = useState('');
   const [isScraping, setIsScraping] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [pasteHtml, setPasteHtml] = useState('');
+  const [pasteTitle, setPasteTitle] = useState('');
+  const [pasteUrl, setPasteUrl] = useState('');
 
   // Initialize queue from localStorage or create new
   useEffect(() => {
@@ -205,6 +208,38 @@ export default function ScraperAgentView() {
     addLog('Cleared completed tasks');
   };
 
+  const importPastedHtml = async () => {
+    if (!pasteHtml || !pasteTitle) return;
+
+    addLog('📋 Importing pasted HTML...');
+
+    try {
+      const { parsePastedHTML, saveScrapedExam } = await import('./scraper/realScraper');
+      const exam = parsePastedHTML(pasteHtml, pasteUrl || 'manual-import', pasteTitle);
+
+      if (exam.questions.length === 0) {
+        addLog('❌ No questions found in the pasted HTML');
+        return;
+      }
+
+      saveScrapedExam(exam);
+      addLog(`✅ Imported ${exam.questions.length} questions from "${pasteTitle}"`);
+
+      // Clear the form
+      setPasteHtml('');
+      setPasteTitle('');
+      setPasteUrl('');
+
+      // Force re-render by updating queue state
+      if (queue) {
+        setQueue({ ...queue });
+      }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      addLog(`❌ Import failed: ${msg}`);
+    }
+  };
+
   const scrapedExams = loadScrapedExams();
   const pendingCount = queue?.tasks.filter(t => t.status === 'pending').length || 0;
   const completedCount = queue?.tasks.filter(t => t.status === 'completed').length || 0;
@@ -315,35 +350,81 @@ export default function ScraperAgentView() {
             </button>
           </div>
 
-          {/* Add Custom Exam */}
-          <div className="border-t border-gray-800 pt-6">
-            <h3 className="text-lg font-medium mb-3">Add Custom Exam</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-              <input
-                type="text"
-                placeholder="Exam Title"
-                value={customTitle}
-                onChange={(e) => setCustomTitle(e.target.value)}
-                className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500"
-              />
-              <input
-                type="url"
-                placeholder="https://nursingplex.com/review/..."
-                value={customUrl}
-                onChange={(e) => setCustomUrl(e.target.value)}
-                className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-            <button
-              onClick={addCustomExam}
-              disabled={!customUrl || !customTitle}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add to Queue
-            </button>
-          </div>
+      {/* Add Custom Exam */}
+      <div className="border-t border-gray-800 pt-6">
+        <h3 className="text-lg font-medium mb-3">Add Custom Exam</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <input
+            type="text"
+            placeholder="Exam Title"
+            value={customTitle}
+            onChange={(e) => setCustomTitle(e.target.value)}
+            className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500"
+          />
+          <input
+            type="url"
+            placeholder="https://nursingplex.com/review/..."
+            value={customUrl}
+            onChange={(e) => setCustomUrl(e.target.value)}
+            className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500"
+          />
         </div>
+        <button
+          onClick={addCustomExam}
+          disabled={!customUrl || !customTitle}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add to Queue
+        </button>
+      </div>
+
+      {/* Manual HTML Paste Method */}
+      <div className="border-t border-gray-800 pt-6 mt-6">
+        <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-green-400" />
+          Manual Import (Always Works!)
+        </h3>
+        <p className="text-sm text-gray-400 mb-3">
+          If the automatic scraper fails, you can manually paste the HTML content from NursingPlex:
+        </p>
+        <ol className="text-sm text-gray-400 mb-4 list-decimal list-inside space-y-1">
+          <li>Go to the NursingPlex exam page</li>
+          <li>Right-click → "View Page Source" (or press Ctrl+U / Cmd+U)</li>
+          <li>Copy all the HTML (Ctrl+A then Ctrl+C)</li>
+          <li>Paste it below and click "Import"</li>
+        </ol>
+        <textarea
+          placeholder="Paste HTML content here..."
+          value={pasteHtml}
+          onChange={(e) => setPasteHtml(e.target.value)}
+          className="w-full h-32 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500 font-mono text-xs resize-y"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+          <input
+            type="text"
+            placeholder="Exam Title (e.g., ATI Fundamentals 2026)"
+            value={pasteTitle}
+            onChange={(e) => setPasteTitle(e.target.value)}
+            className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500"
+          />
+          <input
+            type="url"
+            placeholder="Source URL (optional)"
+            value={pasteUrl}
+            onChange={(e) => setPasteUrl(e.target.value)}
+            className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500"
+          />
+        </div>
+        <button
+          onClick={importPastedHtml}
+          disabled={!pasteHtml || !pasteTitle}
+          className="flex items-center gap-2 px-4 py-2 mt-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          Import Questions
+        </button>
+      </div>        </div>
 
         {/* Task Queue */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
