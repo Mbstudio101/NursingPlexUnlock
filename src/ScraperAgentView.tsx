@@ -12,7 +12,6 @@ import {
   createScraperQueue,
   saveScraperState,
   loadScraperState,
-  saveScrapedExam,
   loadScrapedExams,
   getPendingExams,
   categorizeExam,
@@ -53,9 +52,12 @@ export default function ScraperAgentView() {
     if (!queue || queue.tasks.length === 0) return;
     
     setIsScraping(true);
-    addLog('Starting scraper agent...');
+    addLog('🚀 Starting real scraper agent...');
     
-    // Simulate scraping process
+    // Import real scraper
+    const { scrapeExam } = await import('./scraper/realScraper');
+    
+    // Real scraping process
     for (let i = 0; i < queue.tasks.length; i++) {
       const task = queue.tasks[i];
       if (task.status === 'completed' || task.status === 'failed') continue;
@@ -63,7 +65,7 @@ export default function ScraperAgentView() {
       // Update task status to scraping
       setQueue((prev: ScraperQueue | null) => {
         if (!prev) return prev;
-        const updated = {
+        return {
           ...prev,
           isRunning: true,
           currentTaskId: task.id,
@@ -71,72 +73,81 @@ export default function ScraperAgentView() {
             t.id === task.id ? { ...t, status: 'scraping' as const, progress: 0 } : t
           ),
         };
-        return updated;
       });
       
-      addLog(`Scraping: ${task.title}`);
+      addLog(`🔄 Scraping: ${task.title}`);
       
-      // Simulate progress
-      for (let progress = 0; progress <= 100; progress += 10) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+      try {
+        // Actually scrape the exam
+        const examData = await scrapeExam(task.url, task.title, (progress, message) => {
+          // Update progress
+          setQueue((prev: ScraperQueue | null) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              tasks: prev.tasks.map((t: ScraperTask) => 
+                t.id === task.id ? { ...t, progress } : t
+              ),
+            };
+          });
+          addLog(`  ${message}`);
+        });
+        
         setQueue((prev: ScraperQueue | null) => {
           if (!prev) return prev;
           return {
             ...prev,
             tasks: prev.tasks.map((t: ScraperTask) => 
-              t.id === task.id ? { ...t, progress } : t
+              t.id === task.id 
+                ? { 
+                    ...t, 
+                    status: 'completed' as const, 
+                    progress: 100,
+                    totalQuestions: examData.totalQuestions,
+                    scrapedQuestions: examData.totalQuestions,
+                    completedAt: new Date().toISOString(),
+                  } 
+                : t
             ),
+            totalCompleted: prev.totalCompleted + 1,
+            currentTaskId: null,
           };
         });
+        
+        addLog(`✅ Completed: ${task.title} (${examData.totalQuestions} questions)`);
+        
+        // Delay between requests to avoid rate limiting
+        if (i < queue.tasks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        
+        setQueue((prev: ScraperQueue | null) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            tasks: prev.tasks.map((t: ScraperTask) => 
+              t.id === task.id 
+                ? { 
+                    ...t, 
+                    status: 'failed' as const, 
+                    error: errorMessage,
+                  } 
+                : t
+            ),
+            totalFailed: prev.totalFailed + 1,
+            currentTaskId: null,
+          };
+        });
+        
+        addLog(`❌ Failed: ${task.title} - ${errorMessage}`);
       }
-      
-      // Simulate completion (in real implementation, this would fetch and parse)
-      const mockQuestions = Math.floor(Math.random() * 50) + 20;
-      const examData = {
-        examId: task.id,
-        title: task.title,
-        totalQuestions: mockQuestions,
-        scrapedDate: new Date().toISOString().split('T')[0],
-        questions: Array.from({ length: mockQuestions }, (_, idx) => ({
-          number: idx + 1,
-          text: `Sample question ${idx + 1} for ${task.title}`,
-          choices: ['A', 'B', 'C', 'D'],
-        })),
-        sourceUrl: task.url,
-      };
-      
-      saveScrapedExam(examData);
-      
-      setQueue((prev: ScraperQueue | null) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          tasks: prev.tasks.map((t: ScraperTask) => 
-            t.id === task.id 
-              ? { 
-                  ...t, 
-                  status: 'completed' as const, 
-                  progress: 100,
-                  totalQuestions: mockQuestions,
-                  scrapedQuestions: mockQuestions,
-                  completedAt: new Date().toISOString(),
-                } 
-              : t
-          ),
-          totalCompleted: prev.totalCompleted + 1,
-          currentTaskId: null,
-        };
-      });
-      
-      addLog(`✓ Completed: ${task.title} (${mockQuestions} questions)`);
-      
-      // Delay between tasks
-      await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
     setIsScraping(false);
     setQueue((prev: ScraperQueue | null) => prev ? { ...prev, isRunning: false, lastRunAt: new Date().toISOString() } : prev);
-    addLog('Scraping completed!');
+    addLog('🎉 Scraping completed!');
   };
 
   const stopScraping = () => {
