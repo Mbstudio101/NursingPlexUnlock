@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Shield, BookOpen, ChevronDown, ChevronUp, Copy, Check, Zap, AlertTriangle, ExternalLink, Lock, Unlock, Eye, GraduationCap, Database, Download } from 'lucide-react';
+import { Shield, BookOpen, ChevronDown, ChevronUp, Copy, Check, Zap, AlertTriangle, ExternalLink, Lock, Unlock, Eye, GraduationCap, Database } from 'lucide-react';
 import ScrapedQuestions from './ScrapedQuestions';
 import QuizView from './QuizView';
 import ExamDatabaseView from './ExamDatabaseView';
-import ScraperAgentView from './ScraperAgentView';
 import { ExamSelector } from './components/ExamSelector';
 import TestData from './TestData';
 
@@ -211,7 +210,7 @@ function App() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState<'console' | 'bookmarklet'>('console');
-  const [view, setView] = useState<'home' | 'scraped' | 'quiz' | 'database' | 'select-exam' | 'test' | 'scraper'>('home');
+  const [view, setView] = useState<'home' | 'scraped' | 'quiz' | 'database' | 'select-exam' | 'test'>('home');
   const [selectedExamId, setSelectedExamId] = useState<string>('rn-hesi-exit-mcphs');
 
   // Hooks must be called unconditionally - BEFORE any early returns
@@ -252,10 +251,6 @@ function App() {
 
   if (view === 'database') {
     return <ExamDatabaseView onExit={() => setView('home')} />;
-  }
-
-  if (view === 'scraper') {
-    return <ScraperAgentView />;
   }
 
   if (view === 'test') {
@@ -391,13 +386,6 @@ function App() {
               >
                 <Database className="w-5 h-5" />
                 Exam Database →
-              </button>
-              <button
-                onClick={() => setView('scraper')}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold hover:scale-105 transition-transform shadow-lg shadow-orange-500/20"
-              >
-                <Download className="w-5 h-5" />
-                Scraper Agent →
               </button>
             </div>
           </div>
