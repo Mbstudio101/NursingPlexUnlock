@@ -9,6 +9,7 @@ import { advancedMedSurgMCHPS } from './advanced-med-surg-mchps';
 import { atiDosageCalculation } from './ati-dosage-calculation';
 import { atiDosageCalculation2 } from './ati-dosage-calculation-v2';
 import { atiDosageCalculationMaternalNewborn } from './ati-dosage-calculation-maternal-newborn';
+import { teasAcademySet20 } from './teas-academy-set20';
 import { nur404wObstetricsMaternity } from './nur404w-obstetrics-maternity';
 
 export interface ExamInfo {
@@ -19,6 +20,7 @@ export interface ExamInfo {
   totalQuestions: number;
   scrapedDate: string;
   questions: any[];
+  notes?: string;
 }
 
 // Debug: Log what we're loading
@@ -33,6 +35,7 @@ console.log('Advanced Med-Surg MCHPS questions:', advancedMedSurgMCHPS?.question
 console.log('ATI Dosage Calculation questions:', atiDosageCalculation?.questions?.length || 0);
 console.log('ATI Dosage Calculation V2 questions:', atiDosageCalculation2?.questions?.length || 0);
 console.log('ATI Dosage Calculation Maternal Newborn questions:', atiDosageCalculationMaternalNewborn?.questions?.length || 0);
+console.log('TEAS Academy Set 20 questions:', teasAcademySet20?.questions?.length || 0);
 console.log('NUR404W Obstetrics Maternity questions:', nur404wObstetricsMaternity?.questions?.length || 0);
 
 export const allScrapedExams: ExamInfo[] = [
@@ -134,6 +137,16 @@ export const allScrapedExams: ExamInfo[] = [
     totalQuestions: 54,
     scrapedDate: '2024-01-15',
     questions: nur404wObstetricsMaternity?.questions || []
+  },
+  {
+    id: 'teas-academy-set20-20240115',
+    title: 'TEAS Academy Practice Set 20 (2024-01-15)',
+    category: 'TEAS',
+    subcategory: 'Practice',
+    totalQuestions: 15,
+    scrapedDate: '2024-01-15',
+    questions: teasAcademySet20?.questions || [],
+    notes: 'Only 15 of 170 questions are real. Questions 16-170 are scrambled/obfuscated word salad on the source page.'
   }
 ];
 
