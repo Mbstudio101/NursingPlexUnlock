@@ -413,30 +413,71 @@ export default function QuizView({ onExit, examId = 'rn-hesi-exit-mcphs' }: Quiz
                 <div className="space-y-3">
                   {currentQuestion.choices.map((choice: string, i: number) => {
                     const isSelected = (answers[currentQuestion.number] || []).includes(i);
+                    const isCorrect = currentQuestion.correctAnswer !== undefined && 
+                      (Array.isArray(currentQuestion.correctAnswer) 
+                        ? currentQuestion.correctAnswer.includes(i)
+                        : currentQuestion.correctAnswer === i);
+                    const hasAnswered = answers[currentQuestion.number] && answers[currentQuestion.number].length > 0;
                     
                     return (
                       <button
                         key={i}
                         onClick={() => handleSelectAnswer(i)}
                         className={`w-full text-left p-4 rounded-xl border transition-all flex items-start gap-3 ${
-                          isSelected
-                            ? 'bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30'
-                            : 'bg-gray-800/50 border-gray-700 hover:border-gray-600 hover:bg-gray-800'
+                          hasAnswered && isCorrect
+                            ? 'bg-green-500/10 border-green-500/40 ring-1 ring-green-500/30'
+                            : hasAnswered && isSelected && !isCorrect
+                              ? 'bg-red-500/10 border-red-500/40 ring-1 ring-red-500/30'
+                              : isSelected
+                                ? 'bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30'
+                                : 'bg-gray-800/50 border-gray-700 hover:border-gray-600 hover:bg-gray-800'
                         }`}
                       >
                         <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                          isSelected 
-                            ? 'bg-emerald-500 text-white' 
-                            : 'bg-gray-700 text-gray-400'
+                          hasAnswered && isCorrect
+                            ? 'bg-green-500 text-white'
+                            : hasAnswered && isSelected && !isCorrect
+                              ? 'bg-red-500 text-white'
+                              : isSelected 
+                                ? 'bg-emerald-500 text-white' 
+                                : 'bg-gray-700 text-gray-400'
                         }`}>
                           {String.fromCharCode(65 + i)}
                         </div>
-                        <span className={`pt-0.5 ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                        <span className={`pt-0.5 flex-1 ${
+                          hasAnswered && isCorrect
+                            ? 'text-green-300 font-semibold'
+                            : hasAnswered && isSelected && !isCorrect
+                              ? 'text-red-300'
+                              : isSelected 
+                                ? 'text-white' 
+                                : 'text-gray-300'
+                        }`}>
                           {choice}
                         </span>
+                        {hasAnswered && isCorrect && (
+                          <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+                        )}
                       </button>
                     );
                   })}
+                  
+                  {/* Show rationale after answering */}
+                  {answers[currentQuestion.number] && answers[currentQuestion.number].length > 0 && currentQuestion.rationale && (
+                    <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <span className="text-blue-400 text-lg">💡</span>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-blue-400 font-semibold mb-2 text-sm">Rationale</h4>
+                          <p className="text-gray-300 text-sm leading-relaxed">
+                            {currentQuestion.rationale}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Placeholder for questions without interactive data yet */
