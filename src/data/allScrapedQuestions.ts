@@ -11,6 +11,7 @@ import { atiDosageCalculation2 } from './ati-dosage-calculation-v2';
 import { atiDosageCalculationMaternalNewborn } from './ati-dosage-calculation-maternal-newborn';
 import { teasAcademySet20 } from './teas-academy-set20';
 import { nur404wObstetricsMaternity } from './nur404w-obstetrics-maternity';
+import { adultHealthMedSurg } from './adult-health-med-surg';
 
 export interface ExamInfo {
   id: string;
@@ -37,6 +38,7 @@ console.log('ATI Dosage Calculation V2 questions:', atiDosageCalculation2?.quest
 console.log('ATI Dosage Calculation Maternal Newborn questions:', atiDosageCalculationMaternalNewborn?.questions?.length || 0);
 console.log('TEAS Academy Set 20 questions:', teasAcademySet20?.questions?.length || 0);
 console.log('NUR404W Obstetrics Maternity questions:', nur404wObstetricsMaternity?.questions?.length || 0);
+console.log('Adult Health Med-Surg questions:', adultHealthMedSurg?.questions?.length || 0);
 
 export const allScrapedExams: ExamInfo[] = [
   {
@@ -147,6 +149,15 @@ export const allScrapedExams: ExamInfo[] = [
     scrapedDate: '2024-01-15',
     questions: teasAcademySet20?.questions || [],
     notes: 'Only 15 of 170 questions are real. Questions 16-170 are scrambled/obfuscated word salad on the source page.'
+  },
+  {
+    id: 'rn-adult-health-med-surg-examplify-20240115',
+    title: 'Adult Health Med-Surg Proctored Exam (Examplify) (2024-01-15)',
+    category: 'RN',
+    subcategory: 'Regular',
+    totalQuestions: 49,
+    scrapedDate: '2024-01-15',
+    questions: adultHealthMedSurg?.questions || []
   }
 ];
 
