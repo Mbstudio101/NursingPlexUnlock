@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Extension Icons</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #1e293b; color: white; }
+    canvas { border: 1px solid #475569; margin: 10px; }
+    button { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 10px; }
+    button:hover { background: #059669; }
+    .container { text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Generate Extension Icons</h1>
+    <p>Click the buttons below to download the icons</p>
+    
+    <canvas id="icon16" width="16" height="16"></canvas>
+    <canvas id="icon48" width="48" height="48"></canvas>
+    <canvas id="icon128" width="128" height="128"></canvas>
+    
+    <div>
+      <button onclick="downloadIcon(16)">Download 16x16</button>
+      <button onclick="downloadIcon(48)">Download 48x48</button>
+      <button onclick="downloadIcon(128)">Download 128x128</button>
+      <button onclick="downloadAll()">Download All</button>
+    </div>
+    
+    <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
+      Save these files to the extension/icons/ folder
+    </p>
+  </div>
+
+  <script>
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#10b981');
+      gradient.addColorStop(1, '#06b6d4');
+      
+      // Draw rounded rectangle background
+      const radius = size * 0.15;
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(size - radius, 0);
+      ctx.quadraticCurveTo(size, 0, size, radius);
+      ctx.lineTo(size, size - radius);
+      ctx.quadraticCurveTo(size, size, size - radius, size);
+      ctx.lineTo(radius, size);
+      ctx.quadraticCurveTo(0, size, 0, size - radius);
+      ctx.lineTo(0, radius);
+      ctx.quadraticCurveTo(0, 0, radius, 0);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Draw unlock icon (simplified lock with checkmark)
+      ctx.strokeStyle = 'white';
+      ctx.fillStyle = 'white';
+      ctx.lineWidth = size * 0.08;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const lockSize = size * 0.4;
+      
+      // Draw lock body
+      ctx.fillRect(centerX - lockSize/2, centerY - lockSize/4, lockSize, lockSize * 0.7);
+      
+      // Draw lock shackle
+      ctx.beginPath();
+      ctx.arc(centerX, centerY - lockSize/4, lockSize * 0.3, Math.PI, 0, false);
+      ctx.stroke();
+      
+      // Draw checkmark
+      ctx.beginPath();
+      ctx.moveTo(centerX - lockSize * 0.2, centerY + lockSize * 0.1);
+      ctx.lineTo(centerX - lockSize * 0.05, centerY + lockSize * 0.25);
+      ctx.lineTo(centerX + lockSize * 0.25, centerY - lockSize * 0.1);
+      ctx.stroke();
+    }
+    
+    function downloadIcon(size) {
+      const canvas = document.getElementById(`icon${size}`);
+      const link = document.createElement('a');
+      link.download = `icon${size}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+    
+    function downloadAll() {
+      downloadIcon(16);
+      setTimeout(() => downloadIcon(48), 100);
+      setTimeout(() => downloadIcon(128), 200);
+    }
+    
+    // Draw all icons on page load
+    drawIcon(document.getElementById('icon16'), 16);
+    drawIcon(document.getElementById('icon48'), 48);
+    drawIcon(document.getElementById('icon128'), 128);
+  </script>
+</body>
+</html>

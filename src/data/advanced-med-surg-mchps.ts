@@ -15,7 +15,8 @@ export const advancedMedSurgMCHPS = {
         "Neurological checks every 12 hours",
         "Daily weights.",
         "Vital Signs Hourly."
-      ]
+      ],
+      correctAnswer: 3
     },
     {
       number: 2,
@@ -25,7 +26,8 @@ export const advancedMedSurgMCHPS = {
         "Fluid separates into concentric rings and is positive for glucose",
         "Fluid is clear and tests positive for nitrates",
         "Fluid is sero-sanguinous and has a low pH of 6"
-      ]
+      ],
+      correctAnswer: 1
     },
     {
       number: 3,
@@ -35,7 +37,8 @@ export const advancedMedSurgMCHPS = {
         "The client with Multiple Sclerosis who is scheduled physical therapy",
         "The client with a C-6 spinal cord injury whose foley catheter is not draining",
         "The client with Amyotrophic Lateral Sclerosis who is experiencing spasticity of the lower extremities"
-      ]
+      ],
+      correctAnswer: 2
     },
     {
       number: 4,
@@ -45,7 +48,8 @@ export const advancedMedSurgMCHPS = {
         "Blood pressure 175/96",
         "Heart rate 34",
         "Heart rate 112"
-      ]
+      ],
+      correctAnswer: 2
     },
     {
       number: 5,
@@ -58,7 +62,8 @@ export const advancedMedSurgMCHPS = {
         "Dysphagia",
         "Fatigue"
       ],
-      isSATA: true
+      isSATA: true,
+      correctAnswer: [0, 3, 4, 5]
     },
     {
       number: 6,
@@ -68,7 +73,8 @@ export const advancedMedSurgMCHPS = {
         "T: 97.9 P: 120 R: 24 BP: 160/100",
         "T: 98.6 P: 88 R: 18 BP: 130/64",
         "T: 98.7 P: 112 R: 20 BP: 148/78"
-      ]
+      ],
+      correctAnswer: 0
     },
     {
       number: 7,
@@ -81,7 +87,8 @@ export const advancedMedSurgMCHPS = {
         "Encourage coughing and deep breathing",
         "Give small, frequent high-calorie meals"
       ],
-      isSATA: true
+      isSATA: true,
+      correctAnswer: [1, 2, 3, 4]
     },
     {
       number: 8,
@@ -91,7 +98,8 @@ export const advancedMedSurgMCHPS = {
         "Monitor blood pressure for neurogenic shock",
         "Calculate cerebral perfusion pressure every shift",
         "Reposition every two hours to prevent pressure injury"
-      ]
+      ],
+      correctAnswer: 3
     },
     {
       number: 9,
@@ -104,7 +112,8 @@ export const advancedMedSurgMCHPS = {
         "IV analgesic medications.",
         "Oral antibiotics."
       ],
-      isSATA: true
+      isSATA: true,
+      correctAnswer: [0, 2, 3, 4]
     },
     {
       number: 10,
@@ -114,7 +123,8 @@ export const advancedMedSurgMCHPS = {
         "I will increase the fiber in my diet",
         "I'm going to learn some stress reduction techniques",
         "I will need to avoid caffeinated beverages"
-      ]
+      ],
+      correctAnswer: 1
     },
     {
       number: 11,
